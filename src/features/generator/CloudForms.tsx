@@ -7,8 +7,7 @@ import {
   Lock 
 } from 'lucide-react';
 import { doc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage, isFirebaseConfigured } from '../../utils/firebase';
+import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
 
@@ -16,7 +15,7 @@ interface CloudFormProps {
   onChange: (link: string) => void;
 }
 
-const compressImage = (file: File): Promise<Blob> => {
+const compressImageBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -25,8 +24,8 @@ const compressImage = (file: File): Promise<Blob> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 1000;
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
         let width = img.width;
         let height = img.height;
 
@@ -47,14 +46,9 @@ const compressImage = (file: File): Promise<Blob> => {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Compression failed'));
-          },
-          'image/jpeg',
-          0.85
-        );
+        // Export as heavily compressed Base64 Data URL to fit in Firestore 1MB limit
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
       };
       img.onerror = reject;
     };
@@ -125,18 +119,22 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   };
 
   const handleUpload = async () => {
-    if (!db || !storage || !selectedFile) return;
+    if (!db || !selectedFile) return;
     setUploading(true);
     setUploadError('');
-    setUploadProgress('Compressing image...');
+    setUploadProgress('Compressing & Uploading...');
 
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     try {
-      const compressedBlob = await compressImage(selectedFile);
-      setUploadProgress('Uploading...');
-      const storageRef = ref(storage, `shares/${shareId}_compressed.jpg`);
-      await uploadBytes(storageRef, compressedBlob);
-      const url = await getDownloadURL(storageRef);
+      // Compress and convert directly to base64
+      const base64Data = await compressImageBase64(selectedFile);
+      
+      // Check if size exceeds Firestore 1MB limit (~1.048.576 bytes)
+      // Base64 string length * (3/4) gives approximate size in bytes
+      const approxSizeBytes = base64Data.length * 0.75;
+      if (approxSizeBytes > 900000) {
+        throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
+      }
 
       let expiresAt: number | null = null;
       if (expiryDays === '1') expiresAt = Date.now() + 24 * 60 * 60 * 1000;
@@ -146,7 +144,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       await setDoc(doc(db, 'shares', shareId), {
         id: shareId,
         type: 'image',
-        content: url,
+        content: base64Data,
         theme: null,
         creatorId: currentUser ? currentUser.uid : 'anonymous',
         createdAt: Date.now(),

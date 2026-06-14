@@ -13,8 +13,7 @@ import {
 } from 'lucide-react';
 import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, deleteObject } from 'firebase/storage';
-import { db, storage, auth } from '../../utils/firebase';
+import { db, auth } from '../../utils/firebase';
 
 interface ShareData {
   id: string;
@@ -102,17 +101,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
       // 1. Delete document from Firestore
       await deleteDoc(doc(db, 'shares', item.id));
 
-      // 2. If it is an image, delete it from Storage
-      if (item.type === 'image' && storage) {
-        try {
-          const storageRef = ref(storage, `shares/${item.id}_compressed.jpg`);
-          await deleteObject(storageRef);
-        } catch (storageErr) {
-          console.warn('Storage file deletion failed (it may have already been deleted):', storageErr);
-        }
-      }
-
-      // Update state
+      // 2. Remove from local state
       setItems(prev => prev.filter(i => i.id !== item.id));
     } catch (err) {
       console.error('Error deleting shared link:', err);
