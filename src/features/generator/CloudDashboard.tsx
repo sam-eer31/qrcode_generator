@@ -5,15 +5,13 @@ import {
   Copy, 
   Check, 
   Sparkles, 
-  ExternalLink, 
   FileText as FileIcon, 
   Image as ImageIcon,
   BarChart3,
   Calendar,
   Download,
   Share,
-  ArrowLeft,
-  QrCode
+  ArrowLeft
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';

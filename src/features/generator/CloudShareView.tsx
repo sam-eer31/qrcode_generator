@@ -4,10 +4,9 @@ import { CloudImageForm, CloudNoteForm } from './CloudForms';
 
 interface CloudShareViewProps {
   onLinkGenerated: (link: string) => void;
-  onNavigate?: (tabId: string) => void;
 }
 
-export const CloudShareView: React.FC<CloudShareViewProps> = ({ onLinkGenerated, onNavigate }) => {
+export const CloudShareView: React.FC<CloudShareViewProps> = ({ onLinkGenerated }) => {
   const [activeForm, setActiveForm] = useState<'image' | 'note'>('image');
 
   return (
@@ -52,9 +51,9 @@ export const CloudShareView: React.FC<CloudShareViewProps> = ({ onLinkGenerated,
 
       <div className="bg-white/50 dark:bg-black/20 rounded-3xl p-6 border border-neutral-200/50 dark:border-neutral-800/50 shadow-inner">
         {activeForm === 'image' ? (
-          <CloudImageForm onChange={onLinkGenerated} onNavigate={onNavigate} />
+          <CloudImageForm onChange={onLinkGenerated} />
         ) : (
-          <CloudNoteForm onChange={onLinkGenerated} onNavigate={onNavigate} />
+          <CloudNoteForm onChange={onLinkGenerated} />
         )}
       </div>
 

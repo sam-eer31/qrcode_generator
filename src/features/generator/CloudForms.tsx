@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  CloudUpload, 
   Settings, 
   AlertCircle, 
   Check, 
   Lock,
   Copy,
   Download,
-  Share
+  Share,
+  CloudUpload
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { doc, setDoc } from 'firebase/firestore';
@@ -17,7 +17,6 @@ import { Label } from '../../components/ui/Input';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
-  onNavigate?: (tab: string) => void;
 }
 
 const SuccessView = ({ title, link, onReset, resetText }: { title: string, link: string, onReset: () => void, resetText: string }) => {
@@ -172,7 +171,7 @@ const MissingFirebaseConfig = () => (
   </div>
 );
 
-export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange, onNavigate }) => {
+export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
@@ -341,7 +340,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange, onNavigate 
   );
 };
 
-export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange, onNavigate }) => {
+export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [messageText, setMessageText] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('ocean');
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');

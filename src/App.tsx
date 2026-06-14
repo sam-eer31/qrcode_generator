@@ -447,10 +447,6 @@ export default function App() {
                       setQrType('url');
                       // Auto-tab switch removed so users see the success state
                     }}
-                    onNavigate={(tab) => {
-                      setActiveTab(tab as any);
-                      scrollToWorkspace();
-                    }}
                   />
                 )}
 
