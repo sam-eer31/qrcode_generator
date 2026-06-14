@@ -4,8 +4,10 @@ import {
   Settings, 
   AlertCircle, 
   Check, 
-  Lock 
+  Lock,
+  Copy
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
@@ -13,7 +15,75 @@ import { Label } from '../../components/ui/Input';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
+  onNavigate?: (tab: string) => void;
 }
+
+const SuccessView = ({ title, link, onReset, onNavigate, resetText }: { title: string, link: string, onReset: () => void, onNavigate?: (tab: string) => void, resetText: string }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current && link) {
+      QRCode.toCanvas(canvasRef.current, link, {
+        width: 140,
+        margin: 1,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+    }
+  }, [link]);
+
+  return (
+    <div className="space-y-5 border border-success/20 bg-success/5 dark:bg-success/5 p-6 md:p-8 rounded-3xl relative overflow-hidden animate-scale-in shadow-inner">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-success/10 rounded-full blur-2xl pointer-events-none -translate-y-1/2 translate-x-1/2" />
+      
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
+        {/* Left Side: Mini QR Preview */}
+        <div className="flex-shrink-0 bg-white p-2 rounded-2xl shadow-sm border border-neutral-200">
+          <canvas ref={canvasRef} className="rounded-xl" />
+        </div>
+
+        {/* Right Side: Details and Actions */}
+        <div className="flex-1 space-y-4 w-full text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center border border-success/25 flex-shrink-0 text-success">
+              <Check className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-neutral-900 dark:text-white">{title}</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">Your link is live and embedded in the QR Code.</p>
+            </div>
+          </div>
+
+          <div className="relative group max-w-sm mx-auto sm:mx-0">
+            <input type="text" readOnly value={link} className="w-full pl-3 pr-10 py-2.5 text-xs rounded-xl border border-success/20 bg-white/70 dark:bg-black/30 text-neutral-600 dark:text-neutral-400 focus:outline-none" />
+            <button onClick={() => navigator.clipboard.writeText(link)} className="absolute right-2 top-1/2 -translate-y-1/2 text-success hover:text-success/80 p-1.5 bg-success/10 rounded-lg transition-colors" title="Copy Link">
+              <Copy className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2 justify-center sm:justify-start">
+            <Button onClick={() => onNavigate?.('customize')} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold" variant="primary">
+              Customize Design
+            </Button>
+            <Button onClick={() => onNavigate?.('export')} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold bg-neutral-900 text-white dark:bg-white dark:text-black hover:opacity-90">
+              Export & Share
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-success/10 flex flex-col sm:flex-row items-center justify-between text-[10px] gap-3 text-center sm:text-left">
+        <button onClick={onReset} className="text-accent hover:underline font-bold">
+          {resetText}
+        </button>
+        <span className="text-neutral-450 dark:text-neutral-500 flex items-center justify-center">
+          <Lock className="w-3 h-3 mr-1" />
+          Manage links in Cloud Dashboard (Top Right Menu)
+        </span>
+      </div>
+    </div>
+  );
+};
 
 const compressImageBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -71,7 +141,7 @@ const MissingFirebaseConfig = () => (
   </div>
 );
 
-export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
+export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange, onNavigate }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
@@ -176,14 +246,17 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
   if (generatedLink) {
     return (
-      <div className="space-y-4 border border-success/20 bg-success/5 dark:bg-success/05 p-6 rounded-2xl">
-        <div className="flex items-center space-x-3 text-success">
-          <div className="h-9 w-9 rounded-full bg-success/10 flex items-center justify-center border border-success/25"><Check className="w-5 h-5" /></div>
-          <div><h3 className="text-sm font-bold">Image Cloud Link Generated</h3><p className="text-[10px] opacity-75">QR Code updated automatically</p></div>
-        </div>
-        <input type="text" readOnly value={generatedLink} className="w-full px-3.5 py-2 text-xs rounded-xl border border-success/20 bg-white/70 dark:bg-black/30" />
-        <button onClick={() => { setGeneratedLink(''); setSelectedFile(null); setFilePreview(null); }} className="text-accent text-[10px] hover:underline font-bold">Upload another image</button>
-      </div>
+      <SuccessView 
+        title="Image Cloud Link Generated"
+        link={generatedLink}
+        resetText="Upload another image"
+        onNavigate={onNavigate}
+        onReset={() => {
+          setGeneratedLink('');
+          setSelectedFile(null);
+          setFilePreview(null);
+        }}
+      />
     );
   }
 
@@ -238,7 +311,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   );
 };
 
-export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
+export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange, onNavigate }) => {
   const [messageText, setMessageText] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('ocean');
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
@@ -291,14 +364,16 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
   if (generatedLink) {
     return (
-      <div className="space-y-4 border border-success/20 bg-success/5 dark:bg-success/05 p-6 rounded-2xl">
-        <div className="flex items-center space-x-3 text-success">
-          <div className="h-9 w-9 rounded-full bg-success/10 flex items-center justify-center border border-success/25"><Check className="w-5 h-5" /></div>
-          <div><h3 className="text-sm font-bold">Note Cloud Link Generated</h3><p className="text-[10px] opacity-75">QR Code updated automatically</p></div>
-        </div>
-        <input type="text" readOnly value={generatedLink} className="w-full px-3.5 py-2 text-xs rounded-xl border border-success/20 bg-white/70 dark:bg-black/30" />
-        <button onClick={() => { setGeneratedLink(''); setMessageText(''); }} className="text-accent text-[10px] hover:underline font-bold">Write another note</button>
-      </div>
+      <SuccessView 
+        title="Note Cloud Link Generated"
+        link={generatedLink}
+        resetText="Write another note"
+        onNavigate={onNavigate}
+        onReset={() => {
+          setGeneratedLink('');
+          setMessageText('');
+        }}
+      />
     );
   }
 
