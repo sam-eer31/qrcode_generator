@@ -442,8 +442,10 @@ export default function App() {
                 {/* E. Cloud Share Tab */}
                 {activeTab === 'cloud' && (
                   <CloudShareView 
-                    onChange={(link) => {
-                      handleDataChange({ type: 'url', value: link });
+                    onLinkGenerated={(link: string) => {
+                      setQrText(link);
+                      setQrType('url');
+                      // Auto-tab switch removed so users see the success state
                     }}
                   />
                 )}
