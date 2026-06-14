@@ -293,7 +293,7 @@ export default function App() {
     { id: 'decode', label: 'Decode', icon: ListFilter },
     { id: 'inspect', label: 'Inspect', icon: Info },
     { id: 'export', label: 'Export', icon: FileText },
-    { id: 'cloud', label: 'Cloud Host', icon: CloudUpload },
+    { id: 'cloud', label: 'Cloud Share', icon: CloudUpload },
     { id: 'history', label: 'History', icon: History },
     { id: 'help', label: 'Help', icon: HelpCircle },
   ];
@@ -395,7 +395,7 @@ export default function App() {
           
           {/* Left Feature Panel Column */}
           {(() => {
-            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || activeTab === 'cloud' || (activeTab === 'export' && exportMode === 'single');
+            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single');
             return (
               <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
                 <AnimatePresence mode="wait">
@@ -494,7 +494,7 @@ export default function App() {
           })()}
 
           {/* Right Live Preview Sticky Column (Single Mode) */}
-          {(activeTab === 'generate' || activeTab === 'customize' || activeTab === 'cloud' || (activeTab === 'export' && exportMode === 'single')) && (
+          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
