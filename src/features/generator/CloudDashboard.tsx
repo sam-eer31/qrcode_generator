@@ -39,6 +39,15 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ShareData | null>(null);
 
+  const getPreviewText = (html: string) => {
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return doc.body.textContent || 'Cloud Note';
+    } catch {
+      return 'Cloud Note';
+    }
+  };
+
   const fetchUserItems = async (user: any) => {
     if (!db || !user) {
       setLoading(false);
@@ -215,7 +224,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
           <div className="flex-1 space-y-5">
             <div>
               <h4 className="text-base font-black text-neutral-900 dark:text-white truncate">
-                {item.type === 'image' ? (item.fileName || 'Shared Image') : item.content}
+                {item.type === 'image' ? (item.fileName || 'Shared Image') : getPreviewText(item.content)}
               </h4>
               <div className="flex flex-wrap items-center gap-3 mt-2 text-[10px] font-bold text-neutral-400 select-none uppercase tracking-wider">
                 <span className="flex items-center bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-lg">
@@ -340,7 +349,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-neutral-800 dark:text-white truncate">
-                          {item.type === 'image' ? (item.fileName || 'Shared Image') : item.content}
+                          {item.type === 'image' ? (item.fileName || 'Shared Image') : getPreviewText(item.content)}
                         </span>
                       </div>
                       

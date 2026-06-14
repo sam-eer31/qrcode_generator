@@ -14,6 +14,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
+import { RichTextEditor } from '../../components/ui/RichTextEditor';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
@@ -429,20 +430,13 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
           </div>
         </div>
 
-        {/* The Live Notepad Preview */}
-        <div className={`relative w-full rounded-2xl overflow-hidden transition-all duration-500 shadow-inner ${activeThemeObj.bg}`}>
-          {/* Subtle overlay for "notepad" texture */}
-          <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] mix-blend-overlay pointer-events-none" />
-          
-          <textarea 
-            rows={6} 
-            value={messageText} 
-            onChange={(e) => setMessageText(e.target.value)} 
-            placeholder="Start typing your note here..." 
-            className={`w-full p-6 text-sm font-medium resize-none bg-transparent outline-none transition-colors ${activeThemeObj.text}`} 
-            style={{ lineHeight: '1.8' }}
-          />
-        </div>
+        <RichTextEditor 
+          value={messageText}
+          onChange={setMessageText}
+          className={activeThemeObj.bg}
+          textColorClass={activeThemeObj.text}
+          placeholder="Start typing your note here..."
+        />
       </div>
 
       <div className="space-y-2">

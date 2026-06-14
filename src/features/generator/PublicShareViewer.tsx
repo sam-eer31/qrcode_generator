@@ -15,6 +15,7 @@ import {
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
+import DOMPurify from 'dompurify';
 
 // Gradient mappings for the message templates
 export const THEME_GRADIENTS: Record<string, { bg: string; text: string; shadow: string; border: string }> = {
@@ -206,10 +207,11 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
             className={`relative rounded-3xl p-8 border ${themeGradient.border} shadow-glass ${themeGradient.shadow} flex flex-col justify-between min-h-[200px] overflow-hidden`}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative z-10">
-              <p className="text-base md:text-lg font-medium tracking-wide leading-relaxed whitespace-pre-wrap select-all font-sans break-words text-white">
-                {data.content}
-              </p>
+            <div className="relative z-10 tiptap-editor">
+              <div 
+                className="tiptap text-base md:text-lg font-medium tracking-wide leading-relaxed whitespace-pre-wrap select-all font-sans break-words text-white"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.content) }}
+              />
             </div>
             
             <div className="flex justify-between items-center mt-8 pt-4 border-t border-white/10 relative z-10 text-[10px] uppercase font-bold tracking-wider text-white/60">
