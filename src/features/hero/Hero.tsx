@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
-import { Palette, Shield, ArrowDown } from 'lucide-react';
+import { ArrowDown } from 'lucide-react';
 
 interface HeroProps {
   onCreateClick: () => void;
