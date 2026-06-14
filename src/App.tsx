@@ -660,15 +660,7 @@ export default function App() {
         onClose={() => setShowCloudDashboard(false)}
         title="My Cloud Links"
       >
-        <CloudDashboard 
-          onLoadGeneratedLink={(link) => {
-            setQrText(link);
-            setQrType('url');
-            setShowCloudDashboard(false);
-            setActiveTab('generate');
-            scrollToWorkspace();
-          }} 
-        />
+        <CloudDashboard />
       </Modal>
 
       {/* 6. Settings Modal */}

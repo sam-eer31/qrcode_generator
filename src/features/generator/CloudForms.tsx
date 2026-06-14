@@ -5,7 +5,9 @@ import {
   AlertCircle, 
   Check, 
   Lock,
-  Copy
+  Copy,
+  Download,
+  Share
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { doc, setDoc } from 'firebase/firestore';
@@ -18,7 +20,7 @@ interface CloudFormProps {
   onNavigate?: (tab: string) => void;
 }
 
-const SuccessView = ({ title, link, onReset, onNavigate, resetText }: { title: string, link: string, onReset: () => void, onNavigate?: (tab: string) => void, resetText: string }) => {
+const SuccessView = ({ title, link, onReset, resetText }: { title: string, link: string, onReset: () => void, resetText: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -30,6 +32,33 @@ const SuccessView = ({ title, link, onReset, onNavigate, resetText }: { title: s
       });
     }
   }, [link]);
+
+  const handleDownload = () => {
+    if (canvasRef.current) {
+      const url = canvasRef.current.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "qr-studio-cloud-link.png";
+      a.click();
+    }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My Cloud QR Code',
+          text: 'Check out my cloud link!',
+          url: link
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(link);
+      alert('Link copied to clipboard!');
+    }
+  };
 
   return (
     <div className="space-y-5 border border-success/20 bg-success/5 dark:bg-success/5 p-6 md:p-8 rounded-3xl relative overflow-hidden animate-scale-in shadow-inner">
@@ -62,11 +91,13 @@ const SuccessView = ({ title, link, onReset, onNavigate, resetText }: { title: s
           </div>
 
           <div className="flex flex-wrap gap-2 pt-2 justify-center sm:justify-start">
-            <Button onClick={() => onNavigate?.('customize')} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold" variant="primary">
-              Customize Design
+            <Button onClick={handleDownload} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold" variant="primary">
+              <Download className="w-3.5 h-3.5 mr-1.5 inline" />
+              Download PNG
             </Button>
-            <Button onClick={() => onNavigate?.('export')} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold bg-neutral-900 text-white dark:bg-white dark:text-black hover:opacity-90">
-              Export & Share
+            <Button onClick={handleShare} className="flex-1 min-w-[140px] py-2.5 text-xs font-bold bg-neutral-900 text-white dark:bg-white dark:text-black hover:opacity-90">
+              <Share className="w-3.5 h-3.5 mr-1.5 inline" />
+              Share Link
             </Button>
           </div>
         </div>
@@ -250,7 +281,6 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange, onNavigate 
         title="Image Cloud Link Generated"
         link={generatedLink}
         resetText="Upload another image"
-        onNavigate={onNavigate}
         onReset={() => {
           setGeneratedLink('');
           setSelectedFile(null);
@@ -368,7 +398,6 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange, onNavigate }
         title="Note Cloud Link Generated"
         link={generatedLink}
         resetText="Write another note"
-        onNavigate={onNavigate}
         onReset={() => {
           setGeneratedLink('');
           setMessageText('');

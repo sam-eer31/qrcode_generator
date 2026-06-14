@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trash2, 
   Eye, 
@@ -9,8 +9,13 @@ import {
   FileText as FileIcon, 
   Image as ImageIcon,
   BarChart3,
-  Calendar
+  Calendar,
+  Download,
+  Share,
+  ArrowLeft,
+  QrCode
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../../utils/firebase';
@@ -27,17 +32,14 @@ interface ShareData {
   fileName?: string;
 }
 
-interface CloudDashboardProps {
-  onLoadGeneratedLink: (link: string) => void;
-}
+interface CloudDashboardProps {}
 
-export const CloudDashboard: React.FC<CloudDashboardProps> = ({ 
-  onLoadGeneratedLink
-}) => {
+export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ShareData[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ShareData | null>(null);
 
   const fetchUserItems = async (user: any) => {
     if (!db || !user) {
@@ -129,6 +131,130 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
 
   const totalScans = items.reduce((acc, curr) => acc + (curr.scanCount || 0), 0);
 
+  const CloudDetailView = ({ 
+    item, 
+    onBack, 
+    onDelete, 
+    deletingId,
+    getExpiryLabel 
+  }: { 
+    item: ShareData, 
+    onBack: () => void, 
+    onDelete: (item: ShareData) => void, 
+    deletingId: string | null,
+    getExpiryLabel: (e: number | null) => React.ReactNode
+  }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const link = `${window.location.origin}${window.location.pathname}?share=${item.id}`;
+    const [copied, setCopied] = useState(false);
+  
+    useEffect(() => {
+      if (canvasRef.current) {
+        QRCode.toCanvas(canvasRef.current, link, {
+          width: 200,
+          margin: 1,
+          color: { dark: '#000000', light: '#ffffff' }
+        });
+      }
+    }, [link]);
+  
+    const handleDownload = () => {
+      if (canvasRef.current) {
+        const url = canvasRef.current.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `qr-studio-${item.id}.png`;
+        a.click();
+      }
+    };
+  
+    const handleShare = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'My Cloud QR Code',
+            url: link
+          });
+        } catch (err) {}
+      } else {
+        handleCopy();
+      }
+    };
+  
+    const handleCopy = () => {
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+  
+    return (
+      <div className="animate-fade-in space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-neutral-200 dark:border-neutral-900">
+          <div className="flex items-center space-x-3">
+            <button onClick={onBack} className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors">
+              <ArrowLeft className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+            </button>
+            <h3 className="text-sm font-black text-neutral-900 dark:text-white">Link Details</h3>
+          </div>
+          <button
+            onClick={() => onDelete(item)}
+            disabled={deletingId === item.id}
+            className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+            title="Delete Link"
+          >
+            {deletingId === item.id ? <div className="h-4 w-4 rounded-full border-2 border-red-500/20 border-t-red-500 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          </button>
+        </div>
+  
+        <div className="flex flex-col sm:flex-row gap-6">
+          {/* QR Code Container */}
+          <div className="flex-shrink-0 bg-white p-3 rounded-3xl shadow-premium border border-neutral-200 dark:border-neutral-800 mx-auto sm:mx-0">
+            <canvas ref={canvasRef} className="rounded-2xl" />
+          </div>
+  
+          {/* Info & Actions */}
+          <div className="flex-1 space-y-5">
+            <div>
+              <h4 className="text-base font-black text-neutral-900 dark:text-white truncate">
+                {item.type === 'image' ? (item.fileName || 'Shared Image') : item.content}
+              </h4>
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-[10px] font-bold text-neutral-400 select-none uppercase tracking-wider">
+                <span className="flex items-center bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-lg">
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  {item.scanCount || 0} Scans
+                </span>
+                <span className="flex items-center bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded-lg">
+                  <Calendar className="w-3.5 h-3.5 mr-1" />
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </span>
+                {getExpiryLabel(item.expiresAt)}
+              </div>
+            </div>
+  
+            <div className="relative">
+              <input type="text" readOnly value={link} className="w-full pl-4 pr-12 py-3 text-xs font-medium rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 focus:outline-none" />
+              <button onClick={handleCopy} className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 p-2 bg-accent/10 rounded-lg transition-colors" title="Copy Link">
+                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+  
+            <div className="flex flex-wrap gap-2 pt-2">
+              <button onClick={handleDownload} className="flex-1 min-w-[140px] py-3 text-xs font-bold rounded-xl bg-accent text-white hover:bg-accent/90 transition-colors flex items-center justify-center">
+                <Download className="w-4 h-4 mr-1.5" />
+                Download PNG
+              </button>
+              <button onClick={handleShare} className="flex-1 min-w-[140px] py-3 text-xs font-bold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-black hover:opacity-90 transition-colors flex items-center justify-center">
+                <Share className="w-4 h-4 mr-1.5" />
+                Share Link
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in select-none">
       
@@ -144,6 +270,17 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
           <div className="h-9 w-9 rounded-full border-3 border-accent/20 border-t-accent animate-spin" />
           <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold animate-pulse">Loading links dashboard...</p>
         </div>
+      ) : selectedItem ? (
+        <CloudDetailView 
+          item={selectedItem}
+          onBack={() => setSelectedItem(null)}
+          onDelete={(item) => {
+            handleDeleteItem(item);
+            if (deletingId !== item.id) setSelectedItem(null); // only close if delete initiated successfully
+          }}
+          deletingId={deletingId}
+          getExpiryLabel={getExpiryLabel}
+        />
       ) : (
         <div className="space-y-6">
           
@@ -235,11 +372,11 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
                       {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                     <button
-                      onClick={() => onLoadGeneratedLink(`${window.location.origin}${window.location.pathname}?share=${item.id}`)}
+                      onClick={() => setSelectedItem(item)}
                       className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-450 hover:text-accent transition-colors"
-                      title="Generate/Export QR"
+                      title="View Details"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item)}
