@@ -189,21 +189,21 @@
 }
 
 /* Vertical Rhythm Engine for Pattern Lines */
-.pattern-lines-active.tiptap-editor .tiptap {
+.pattern-lines-active .tiptap-editor .tiptap {
   line-height: 28px;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap > * {
+.pattern-lines-active .tiptap-editor .tiptap > * {
   margin-top: 0;
   margin-bottom: 28px;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap p {
+.pattern-lines-active .tiptap-editor .tiptap p {
   line-height: 28px;
   min-height: 28px;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap h1 {
+.pattern-lines-active .tiptap-editor .tiptap h1 {
   font-size: 28px;
   line-height: 56px;
   margin-top: 28px;
@@ -211,7 +211,7 @@
   font-weight: 800;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap h2 {
+.pattern-lines-active .tiptap-editor .tiptap h2 {
   font-size: 21px;
   line-height: 28px;
   margin-top: 28px;
@@ -219,18 +219,18 @@
   font-weight: 700;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap ul,
-.pattern-lines-active.tiptap-editor .tiptap ol {
+.pattern-lines-active .tiptap-editor .tiptap ul,
+.pattern-lines-active .tiptap-editor .tiptap ol {
   line-height: 28px;
   margin-bottom: 28px;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap li {
+.pattern-lines-active .tiptap-editor .tiptap li {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-.pattern-lines-active.tiptap-editor .tiptap blockquote {
+.pattern-lines-active .tiptap-editor .tiptap blockquote {
   line-height: 28px;
   margin-bottom: 28px;
 }

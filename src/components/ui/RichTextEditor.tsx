@@ -186,16 +186,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <MenuBar editor={editor} textColorClass={textColorClass} />
       
       <div className="relative flex-1">
-        {/* Dynamic Pattern Overlay */}
-        {bgPattern === 'dots' && (
-          <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
-        )}
-        {bgPattern === 'lines' && (
-          <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
-        )}
-        
-        <div className={`relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor ${bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
-          <EditorContent editor={editor} />
+        <div className={`relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor-wrapper ${bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
+          <div className="relative min-h-full tiptap-editor">
+            {/* Dynamic Pattern Overlay - Now scrolls with content */}
+            {bgPattern === 'dots' && (
+              <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
+            )}
+            {bgPattern === 'lines' && (
+              <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
+            )}
+            
+            <div className="relative z-10">
+              <EditorContent editor={editor} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
