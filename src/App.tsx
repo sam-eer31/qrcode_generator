@@ -14,6 +14,7 @@ import {
   Info,
   Layers,
   QrCode,
+  Download,
 } from 'lucide-react';
 
 // Common UI Components
@@ -28,7 +29,7 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { useKeyPress } from './hooks/useKeyPress';
 
 // Utilities & Options
-import { drawCustomQR, DEFAULT_STYLE, PRESETS } from './utils/qrUtils';
+import { drawCustomQR, DEFAULT_STYLE, PRESETS, downloadCanvas, generateSVG, exportToPDF } from './utils/qrUtils';
 import type { QRStyleOptions } from './utils/qrUtils';
 
 // Feature Views
@@ -98,6 +99,9 @@ export default function App() {
 
   // Reference for live canvas
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const batchCanvasRef1 = useRef<HTMLCanvasElement>(null);
+  const batchCanvasRef2 = useRef<HTMLCanvasElement>(null);
+  const batchCanvasRef3 = useRef<HTMLCanvasElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   // Stable text changer callback to prevent infinite re-render loops in forms
@@ -112,6 +116,16 @@ export default function App() {
       drawCustomQR(canvasRef.current, qrText, options);
     }
   }, [qrText, options, activeTab, exportMode]);
+
+  // Redraw batch preview canvases
+  useEffect(() => {
+    if (activeTab === 'export' && exportMode === 'batch') {
+      const items = batchTexts.split('\n').map((t) => t.trim()).filter(Boolean);
+      if (items[0] && batchCanvasRef1.current) drawCustomQR(batchCanvasRef1.current, items[0], options);
+      if (items[1] && batchCanvasRef2.current) drawCustomQR(batchCanvasRef2.current, items[1], options);
+      if (items[2] && batchCanvasRef3.current) drawCustomQR(batchCanvasRef3.current, items[2], options);
+    }
+  }, [batchTexts, options, activeTab, exportMode]);
 
   // Apply default size from settings to options when app loads
   useEffect(() => {
@@ -159,6 +173,8 @@ export default function App() {
       setOptions((prev) => ({ ...prev, ...preset }));
     }
   };
+
+
 
   // Save QR to history
   const handleSaveToHistory = () => {
@@ -449,6 +465,22 @@ export default function App() {
                   <canvas ref={canvasRef} className="max-w-full max-h-full qr-preview-canvas rounded" />
                 </div>
 
+                {/* Proceed to Export Button */}
+                {activeTab !== 'export' && (
+                  <div className="w-full max-w-[280px] mt-4">
+                    <Button 
+                      onClick={() => {
+                        setActiveTab('export');
+                        scrollToWorkspace();
+                      }} 
+                      className="w-full py-3 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Proceed to Export</span>
+                    </Button>
+                  </div>
+                )}
+
                 {/* Save design to history form */}
                 <div className="w-full mt-6 space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-900">
                   <div>
@@ -508,19 +540,36 @@ export default function App() {
                 {/* Cool Stack Visual */}
                 <div className="w-full aspect-square max-w-[280px] bg-neutral-50 dark:bg-neutral-950 rounded-2xl border border-neutral-200 dark:border-neutral-850 p-4 flex flex-col items-center justify-center relative shadow-glass dark:shadow-glass-dark mb-2">
                   <div className="relative w-32 h-32 mt-4">
-                    {/* Background card 2 */}
-                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-4 -translate-y-4 opacity-50 flex items-center justify-center" />
-                    {/* Background card 1 */}
-                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-2 -translate-y-2 opacity-75 flex items-center justify-center" />
-                    {/* Foreground card */}
-                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border-2 border-accent rounded-xl shadow-lg flex flex-col items-center justify-center z-10">
-                      <QrCode className="h-12 w-12 text-neutral-800 dark:text-neutral-200 mb-2" />
-                      <div className="flex space-x-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse delay-75" />
-                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse delay-150" />
-                      </div>
-                    </div>
+                    {(() => {
+                       const items = batchTexts.split('\n').map((t) => t.trim()).filter(Boolean);
+                       const has1 = items.length > 0;
+                       const has2 = items.length > 1;
+                       const has3 = items.length > 2;
+
+                       return (
+                         <>
+                            {/* Background card 2 (Item 3) */}
+                            <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-6 -translate-y-6 opacity-40 flex items-center justify-center overflow-hidden">
+                               {has3 ? <canvas ref={batchCanvasRef3} className="w-full h-full object-cover" /> : <div className="text-neutral-300 dark:text-neutral-700"><QrCode className="w-8 h-8 opacity-50" /></div>}
+                            </div>
+                            
+                            {/* Background card 1 (Item 2) */}
+                            <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-3 -translate-y-3 opacity-70 flex items-center justify-center overflow-hidden">
+                               {has2 ? <canvas ref={batchCanvasRef2} className="w-full h-full object-cover" /> : <div className="text-neutral-300 dark:text-neutral-700"><QrCode className="w-8 h-8 opacity-50" /></div>}
+                            </div>
+                            
+                            {/* Foreground card (Item 1) */}
+                            <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border-2 border-accent rounded-xl shadow-lg flex flex-col items-center justify-center z-10 overflow-hidden bg-white dark:bg-[#0A0A0A]">
+                               {has1 ? <canvas ref={batchCanvasRef1} className="w-full h-full object-cover p-1" /> : (
+                                  <>
+                                    <QrCode className="h-10 w-10 text-neutral-800 dark:text-neutral-200 mb-2 opacity-50" />
+                                    <span className="text-[10px] font-bold text-neutral-400">Empty Batch</span>
+                                  </>
+                               )}
+                            </div>
+                         </>
+                       );
+                    })()}
                   </div>
                 </div>
 
