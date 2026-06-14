@@ -344,6 +344,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [messageText, setMessageText] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('light');
+  const [selectedPattern, setSelectedPattern] = useState<'plain' | 'dots' | 'lines'>('dots');
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -375,6 +376,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
         type: 'text',
         content: messageText,
         theme: selectedTheme,
+        bgPattern: selectedPattern,
         creatorId: currentUser ? currentUser.uid : 'anonymous',
         createdAt: Date.now(),
         expiresAt,
@@ -420,7 +422,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   return (
     <div className="space-y-6 animate-scale-in">
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pb-1">
           <Label>Live Notepad</Label>
           <div className="flex space-x-2 select-none">
             {NOTE_THEMES.map((theme) => (
@@ -431,12 +433,29 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
           </div>
         </div>
 
+        <div className="flex items-center space-x-2 mb-2">
+          {(['plain', 'dots', 'lines'] as const).map((pattern) => (
+            <button
+              key={pattern}
+              onClick={() => setSelectedPattern(pattern)}
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors border ${
+                selectedPattern === pattern 
+                  ? 'bg-neutral-800 text-white border-neutral-800 dark:bg-white dark:text-black dark:border-white' 
+                  : 'bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+              }`}
+            >
+              {pattern}
+            </button>
+          ))}
+        </div>
+
         <RichTextEditor 
           value={messageText}
           onChange={setMessageText}
           className={activeThemeObj.bg}
           textColorClass={activeThemeObj.text}
           textureClass={activeThemeObj.texture}
+          bgPattern={selectedPattern}
           placeholder="Start typing your note here..."
         />
       </div>

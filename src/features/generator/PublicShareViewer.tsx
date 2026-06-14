@@ -18,42 +18,48 @@ import { Button } from '../../components/ui/Button';
 import DOMPurify from 'dompurify';
 
 // Gradient mappings for the message templates
-export const THEME_GRADIENTS: Record<string, { bg: string; text: string; shadow: string; border: string }> = {
+export const THEME_GRADIENTS: Record<string, { bg: string; text: string; shadow: string; border: string; texture: string }> = {
   light: {
     bg: '#ffffff',
     text: 'text-neutral-900',
     shadow: 'shadow-neutral-200/50',
-    border: 'border-neutral-200'
+    border: 'border-neutral-200',
+    texture: 'invert opacity-[0.05]'
   },
   ocean: {
     bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
     text: 'text-white',
     shadow: 'shadow-blue-500/20',
-    border: 'border-blue-400/30'
+    border: 'border-blue-400/30',
+    texture: 'opacity-10 mix-blend-overlay'
   },
   sunset: {
     bg: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%)',
     text: 'text-white',
     shadow: 'shadow-orange-500/20',
-    border: 'border-orange-400/30'
+    border: 'border-orange-400/30',
+    texture: 'opacity-10 mix-blend-overlay'
   },
   forest: {
     bg: 'linear-gradient(135deg, #10b981 0%, #0d9488 100%)',
     text: 'text-white',
     shadow: 'shadow-emerald-500/20',
-    border: 'border-emerald-400/30'
+    border: 'border-emerald-400/30',
+    texture: 'opacity-10 mix-blend-overlay'
   },
   cyberpunk: {
     bg: 'linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #4338ca 100%)',
     text: 'text-white',
     shadow: 'shadow-purple-500/20',
-    border: 'border-purple-400/30'
+    border: 'border-purple-400/30',
+    texture: 'opacity-10 mix-blend-overlay'
   },
   minimalist: {
     bg: 'linear-gradient(135deg, #262626 0%, #0a0a0a 100%)',
     text: 'text-white',
     shadow: 'shadow-black/40',
-    border: 'border-neutral-800'
+    border: 'border-neutral-800',
+    texture: 'opacity-20'
   }
 };
 
@@ -62,6 +68,7 @@ interface ShareData {
   type: 'image' | 'text';
   content: string;
   theme?: string;
+  bgPattern?: 'plain' | 'dots' | 'lines';
   creatorId: string;
   createdAt: number;
   expiresAt: number | null;
@@ -212,8 +219,16 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
             style={{ backgroundImage: themeGradient.bg }}
             className={`relative rounded-3xl p-8 border ${themeGradient.border} shadow-glass ${themeGradient.shadow} flex flex-col justify-between min-h-[200px] overflow-hidden`}
           >
+            {/* Dynamic Pattern Overlay */}
+            {(!data.bgPattern || data.bgPattern === 'dots') && (
+              <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 ${themeGradient.texture}`} />
+            )}
+            {data.bgPattern === 'lines' && (
+              <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 ${themeGradient.texture}`} />
+            )}
+
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative z-10 tiptap-editor">
+            <div className={`relative z-10 tiptap-editor ${data.bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
               <div 
                 className={`tiptap text-base md:text-lg font-medium tracking-wide leading-relaxed whitespace-pre-wrap select-all font-sans break-words ${themeGradient.text}`}
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.content) }}

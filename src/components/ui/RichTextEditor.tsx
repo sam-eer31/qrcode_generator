@@ -25,6 +25,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   textColorClass?: string;
   textureClass?: string;
+  bgPattern?: 'plain' | 'dots' | 'lines';
 }
 
 const MenuBar = ({ editor, textColorClass }: { editor: any, textColorClass: string }) => {
@@ -147,7 +148,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   className = '',
   placeholder = 'Start typing...',
   textColorClass = 'text-white',
-  textureClass = 'opacity-10 mix-blend-overlay'
+  textureClass = 'opacity-10 mix-blend-overlay',
+  bgPattern = 'dots'
 }) => {
   const editor = useEditor({
     extensions: [
@@ -184,10 +186,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <MenuBar editor={editor} textColorClass={textColorClass} />
       
       <div className="relative flex-1">
-        {/* Subtle overlay for "notepad" texture */}
-        <div className={`absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
+        {/* Dynamic Pattern Overlay */}
+        {bgPattern === 'dots' && (
+          <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
+        )}
+        {bgPattern === 'lines' && (
+          <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
+        )}
         
-        <div className="relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor">
+        <div className={`relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor ${bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
           <EditorContent editor={editor} />
         </div>
       </div>
