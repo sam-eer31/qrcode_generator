@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>QR Studio - The Ultimate Open-Source QR Toolkit</title>
+    <meta name="title" content="QR Studio - The Ultimate Open-Source QR Toolkit" />
+    <meta name="description" content="Generate, customize, decode, and inspect QR codes. Gorgeous styles, SVG exports, and advanced analytics." />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://qrstudio.vercel.app/" />
+    <meta property="og:title" content="QR Studio - The Ultimate Open-Source QR Toolkit" />
+    <meta property="og:description" content="Generate, customize, decode, and inspect QR codes. Gorgeous styles, SVG exports, and advanced analytics." />
+    <meta property="og:image" content="/icon.svg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://qrstudio.vercel.app/" />
+    <meta property="twitter:title" content="QR Studio - The Ultimate Open-Source QR Toolkit" />
+    <meta property="twitter:description" content="Generate, customize, decode, and inspect QR codes. Gorgeous styles, SVG exports, and advanced analytics." />
+    <meta property="twitter:image" content="/icon.svg" />
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Structured Data (JSON-LD) for SEO -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "QR Studio",
+        "url": "https://qrstudio.vercel.app",
+        "description": "The Ultimate Open-Source QR Toolkit. Generate, customize, decode, and inspect QR codes.",
+        "applicationCategory": "Utility",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5 Canvas.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-[#FAFAFA] text-black antialiased font-sans transition-colors duration-300 dark:bg-[#0A0A0A] dark:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Service worker registration for offline support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered successfully.', reg.scope))
+            .catch(err => console.warn('Service Worker registration failed.', err));
+        });
+      }
+    </script>
+  </body>
+</html>
