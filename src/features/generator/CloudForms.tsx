@@ -343,7 +343,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
 export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [messageText, setMessageText] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState('ocean');
+  const [selectedTheme, setSelectedTheme] = useState('light');
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -407,11 +407,12 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   }
 
   const NOTE_THEMES = [
+    { id: 'light', name: 'Clean White', bg: 'bg-white border border-neutral-200 dark:border-neutral-800', text: 'text-neutral-900 placeholder:text-neutral-400', texture: 'invert opacity-[0.05]' },
     { id: 'ocean', name: 'Ocean Blue', bg: 'bg-gradient-to-br from-blue-500 to-cyan-500', text: 'text-white placeholder:text-white/60' },
     { id: 'sunset', name: 'Sunset Glow', bg: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500', text: 'text-white placeholder:text-white/60' },
     { id: 'forest', name: 'Emerald', bg: 'bg-gradient-to-br from-emerald-500 to-teal-600', text: 'text-white placeholder:text-white/60' },
     { id: 'cyberpunk', name: 'Cyberpunk', bg: 'bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-600', text: 'text-white placeholder:text-white/60' },
-    { id: 'minimalist', name: 'Dark Mode', bg: 'bg-neutral-900 border border-neutral-800', text: 'text-neutral-100 placeholder:text-neutral-500' }
+    { id: 'minimalist', name: 'Dark Mode', bg: 'bg-neutral-900 border border-neutral-800', text: 'text-neutral-100 placeholder:text-neutral-500', texture: 'opacity-20' }
   ];
 
   const activeThemeObj = NOTE_THEMES.find(t => t.id === selectedTheme) || NOTE_THEMES[0];
@@ -435,6 +436,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
           onChange={setMessageText}
           className={activeThemeObj.bg}
           textColorClass={activeThemeObj.text}
+          textureClass={activeThemeObj.texture}
           placeholder="Start typing your note here..."
         />
       </div>

@@ -24,6 +24,7 @@ interface RichTextEditorProps {
   className?: string;
   placeholder?: string;
   textColorClass?: string;
+  textureClass?: string;
 }
 
 const MenuBar = ({ editor, textColorClass }: { editor: any, textColorClass: string }) => {
@@ -145,7 +146,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onChange, 
   className = '',
   placeholder = 'Start typing...',
-  textColorClass = 'text-white'
+  textColorClass = 'text-white',
+  textureClass = 'opacity-10 mix-blend-overlay'
 }) => {
   const editor = useEditor({
     extensions: [
@@ -183,7 +185,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       
       <div className="relative flex-1">
         {/* Subtle overlay for "notepad" texture */}
-        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] mix-blend-overlay pointer-events-none z-0" />
+        <div className={`absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
         
         <div className="relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor">
           <EditorContent editor={editor} />

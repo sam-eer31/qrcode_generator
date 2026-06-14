@@ -19,6 +19,12 @@ import DOMPurify from 'dompurify';
 
 // Gradient mappings for the message templates
 export const THEME_GRADIENTS: Record<string, { bg: string; text: string; shadow: string; border: string }> = {
+  light: {
+    bg: '#ffffff',
+    text: 'text-neutral-900',
+    shadow: 'shadow-neutral-200/50',
+    border: 'border-neutral-200'
+  },
   ocean: {
     bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
     text: 'text-white',
@@ -209,12 +215,12 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             <div className="relative z-10 tiptap-editor">
               <div 
-                className="tiptap text-base md:text-lg font-medium tracking-wide leading-relaxed whitespace-pre-wrap select-all font-sans break-words text-white"
+                className={`tiptap text-base md:text-lg font-medium tracking-wide leading-relaxed whitespace-pre-wrap select-all font-sans break-words ${themeGradient.text}`}
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.content) }}
               />
             </div>
             
-            <div className="flex justify-between items-center mt-8 pt-4 border-t border-white/10 relative z-10 text-[10px] uppercase font-bold tracking-wider text-white/60">
+            <div className={`flex justify-between items-center mt-8 pt-4 border-t relative z-10 text-[10px] uppercase font-bold tracking-wider ${data.theme === 'light' ? 'border-neutral-200 text-neutral-400' : 'border-white/10 text-white/60'}`}>
               <span className="flex items-center">
                 <FileIcon className="w-3.5 h-3.5 mr-1" />
                 Message Note
