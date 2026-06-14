@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   signOut, 
   GoogleAuthProvider,
-  signInWithRedirect
+  signInWithPopup
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../utils/firebase';
@@ -56,7 +56,7 @@ export const HeaderAuth: React.FC<HeaderAuthProps> = ({ onOpenDashboard }) => {
     setActionLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (err) {
       console.error(err);
       setActionLoading(false);

@@ -311,7 +311,7 @@ export default function App() {
           <img src="/icon.svg" alt="QR Studio Brand Icon" className="h-8 w-8 object-contain" />
           <div>
             <h1 className="text-sm font-black tracking-wide font-sans">QR STUDIO</h1>
-            <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">The Open-Source QR Toolkit</span>
+            <span className="hidden sm:block text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">The Open-Source QR Toolkit</span>
           </div>
         </div>
 
