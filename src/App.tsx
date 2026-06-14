@@ -15,7 +15,7 @@ import {
   Layers,
   QrCode,
   Download,
-  Image as ImageIcon,
+  CloudUpload,
 } from 'lucide-react';
 
 // Common UI Components
@@ -58,7 +58,7 @@ import { HelpSection } from './features/help/HelpSection';
 import { PublicShareViewer } from './features/generator/PublicShareViewer';
 import { HeaderAuth } from './components/HeaderAuth';
 import { CloudDashboard } from './features/generator/CloudDashboard';
-import { CloudImageForm, CloudNoteForm } from './features/generator/CloudForms';
+import { CloudShareView } from './features/generator/CloudShareView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('generate');
@@ -84,8 +84,6 @@ export default function App() {
     vcard: 'BEGIN:VCARD\nVERSION:3.0\nN:Morgan;Alex;;;\nFN:Alex Morgan\nORG:QR Studio Corp\nTEL;TYPE=CELL:+1 (555) 019-2834\nEMAIL;TYPE=PREF,INTERNET:alex@qrstudio.dev\nURL:https://qrstudio.vercel.app\nEND:VCARD',
     calendar: 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Product Launch Keynote\nDESCRIPTION:Unveiling QR Studio features.\nLOCATION:San Francisco, CA\nDTSTART:20260701T100000Z\nDTEND:20260701T120000Z\nEND:VEVENT\nEND:VCALENDAR',
     crypto: 'ethereum:0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    cloudImage: '',
-    cloudNote: '',
   });
   
   // Customization styling state
@@ -172,6 +170,10 @@ export default function App() {
   });
   useKeyPress('e', () => {
     setActiveTab('export');
+    scrollToWorkspace();
+  });
+  useKeyPress('c', () => {
+    setActiveTab('cloud');
     scrollToWorkspace();
   });
   useKeyPress('?', (e) => {
@@ -280,10 +282,6 @@ export default function App() {
         return <CalendarForm initialText={qrTextCache.calendar} onChange={handleTextChange} />;
       case 'crypto':
         return <CryptoForm initialText={qrTextCache.crypto} onChange={handleTextChange} />;
-      case 'cloudImage':
-        return <CloudImageForm onChange={handleTextChange} />;
-      case 'cloudNote':
-        return <CloudNoteForm onChange={handleTextChange} />;
       default:
         return <UrlForm initialText={qrTextCache.url} onChange={handleTextChange} />;
     }
@@ -295,6 +293,7 @@ export default function App() {
     { id: 'decode', label: 'Decode', icon: ListFilter },
     { id: 'inspect', label: 'Inspect', icon: Info },
     { id: 'export', label: 'Export', icon: FileText },
+    { id: 'cloud', label: 'Cloud Host', icon: CloudUpload },
     { id: 'history', label: 'History', icon: History },
     { id: 'help', label: 'Help', icon: HelpCircle },
   ];
@@ -396,7 +395,7 @@ export default function App() {
           
           {/* Left Feature Panel Column */}
           {(() => {
-            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single');
+            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || activeTab === 'cloud' || (activeTab === 'export' && exportMode === 'single');
             return (
               <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
                 <AnimatePresence mode="wait">
@@ -409,75 +408,18 @@ export default function App() {
                   >
                 {/* A. Generate View */}
                 {activeTab === 'generate' && (
-                  <div className="space-y-8 animate-fade-in">
-                    
-                    {/* Premium Cloud Modes */}
-                    <div className="space-y-3">
-                      <Label>Dynamic Cloud Codes</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button
-                          onClick={() => {
-                            setQrType('cloudImage');
-                            setQrText(qrTextCache['cloudImage']);
-                          }}
-                          className={`relative group overflow-hidden rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 border ${qrType === 'cloudImage' ? 'border-accent shadow-lg shadow-accent/20 ring-2 ring-accent/20' : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 bg-white dark:bg-[#111]'}`}
-                        >
-                          <div className={`absolute inset-0 opacity-10 transition-opacity duration-300 ${qrType === 'cloudImage' ? 'bg-gradient-to-br from-accent to-purple-500 opacity-20' : 'group-hover:bg-gradient-to-br group-hover:from-accent group-hover:to-purple-500'}`} />
-                          <div className="relative flex items-start space-x-4">
-                            <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${qrType === 'cloudImage' ? 'bg-accent text-white' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 group-hover:text-accent'}`}>
-                              <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </div>
-                            <div>
-                              <h4 className={`text-sm sm:text-base font-bold transition-colors ${qrType === 'cloudImage' ? 'text-accent' : 'text-neutral-900 dark:text-white'}`}>Host an Image</h4>
-                              <p className="text-[10px] sm:text-xs text-neutral-500 mt-0.5 leading-snug">Upload a photo securely and generate a scannable link.</p>
-                            </div>
-                          </div>
-                          {qrType === 'cloudImage' && <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-accent shadow-[0_0_8px_rgba(var(--color-accent),0.8)]" />}
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setQrType('cloudNote');
-                            setQrText(qrTextCache['cloudNote']);
-                          }}
-                          className={`relative group overflow-hidden rounded-2xl p-4 sm:p-5 text-left transition-all duration-300 border ${qrType === 'cloudNote' ? 'border-success shadow-lg shadow-success/20 ring-2 ring-success/20' : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 bg-white dark:bg-[#111]'}`}
-                        >
-                          <div className={`absolute inset-0 opacity-10 transition-opacity duration-300 ${qrType === 'cloudNote' ? 'bg-gradient-to-br from-success to-teal-500 opacity-20' : 'group-hover:bg-gradient-to-br group-hover:from-success group-hover:to-teal-500'}`} />
-                          <div className="relative flex items-start space-x-4">
-                            <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${qrType === 'cloudNote' ? 'bg-success text-white' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 group-hover:text-success'}`}>
-                              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </div>
-                            <div>
-                              <h4 className={`text-sm sm:text-base font-bold transition-colors ${qrType === 'cloudNote' ? 'text-success' : 'text-neutral-900 dark:text-white'}`}>Write a Note</h4>
-                              <p className="text-[10px] sm:text-xs text-neutral-500 mt-0.5 leading-snug">Host a styled text message, instructions, or secret note.</p>
-                            </div>
-                          </div>
-                          {qrType === 'cloudNote' && <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-neutral-200 dark:border-neutral-800" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white/50 dark:bg-[#0C0C0C]/50 px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400 select-none">Or Basic Data Types</span>
-                      </div>
-                    </div>
-
+                  <div className="space-y-6">
                     <div>
+                      <Label htmlFor="qr-datatype-selector">QR Data Category</Label>
                       <Select
                         id="qr-datatype-selector"
-                        value={['cloudImage', 'cloudNote'].includes(qrType) ? '' : qrType}
+                        value={qrType}
                         onChange={(e) => {
                           const newType = e.target.value;
-                          if (!newType) return;
                           setQrType(newType);
                           setQrText(qrTextCache[newType]);
                         }}
                         options={[
-                          { value: '', label: 'Select a basic type...' },
                           { value: 'url', label: 'Website Link (URL)' },
                           { value: 'text', label: 'Plain Text Message' },
                           { value: 'wifi', label: 'WiFi Local Connection' },
@@ -492,10 +434,21 @@ export default function App() {
                       />
                     </div>
                     
-                    <div className="pt-2">
-                      {renderGeneratorForm()}
-                    </div>
+                    <hr className="border-neutral-200 dark:border-neutral-900" />
+                    {renderGeneratorForm()}
                   </div>
+                )}
+
+                {/* H. Cloud Share View */}
+                {activeTab === 'cloud' && (
+                  <CloudShareView
+                    onLinkGenerated={(link) => {
+                      setQrText(link);
+                      setQrType('url');
+                      setActiveTab('generate');
+                      scrollToWorkspace();
+                    }}
+                  />
                 )}
 
                 {/* B. Customize View */}
@@ -541,7 +494,7 @@ export default function App() {
           })()}
 
           {/* Right Live Preview Sticky Column (Single Mode) */}
-          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
+          {(activeTab === 'generate' || activeTab === 'customize' || activeTab === 'cloud' || (activeTab === 'export' && exportMode === 'single')) && (
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
