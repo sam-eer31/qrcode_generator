@@ -224,7 +224,10 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
               <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 ${themeGradient.texture}`} />
             )}
             {data.bgPattern === 'lines' && (
-              <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 ${themeGradient.texture}`} />
+              <div 
+                className={`absolute inset-0 pattern-lines pointer-events-none z-0 ${themeGradient.texture}`}
+                style={{ '--pattern-offset': '32px' } as React.CSSProperties}
+              />
             )}
 
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
