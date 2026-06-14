@@ -24,8 +24,8 @@ const compressImageBase64 = (file: File): Promise<string> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 400;
         let width = img.width;
         let height = img.height;
 
@@ -47,7 +47,8 @@ const compressImageBase64 = (file: File): Promise<string> => {
         ctx?.drawImage(img, 0, 0, width, height);
 
         // Export as heavily compressed Base64 Data URL to fit in Firestore 1MB limit
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        // 400x400 with 0.5 quality guarantees tiny size (<100KB)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
         resolve(dataUrl);
       };
       img.onerror = reject;
