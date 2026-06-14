@@ -15,6 +15,7 @@ import {
   Layers,
   QrCode,
   Download,
+  CloudUpload,
 } from 'lucide-react';
 
 // Common UI Components
@@ -23,6 +24,7 @@ import { Modal } from './components/ui/Modal';
 import { Select, Label } from './components/ui/Input';
 import { ThemeToggle } from './components/ui/ThemeToggle';
 import { CommandPalette } from './components/ui/CommandPalette';
+import { FirebaseConfigForm } from './components/FirebaseConfigForm';
 
 // Hooks
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -53,11 +55,15 @@ import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryPanel } from './features/history/HistoryPanel';
 import type { HistoryItem } from './features/history/HistoryPanel';
 import { HelpSection } from './features/help/HelpSection';
+import { CloudShareTab } from './features/generator/CloudShareTab';
+import { PublicShareViewer } from './features/generator/PublicShareViewer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('generate');
   const [qrText, setQrText] = useState<string>('https://google.com');
   const [qrType, setQrType] = useState<string>('url');
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [cloudView, setCloudView] = useState<'editor' | 'dashboard'>('editor');
   
   // Export Mode State
   const [exportMode, setExportMode] = useState<'single' | 'batch'>('single');
@@ -132,6 +138,15 @@ export default function App() {
     setOptions(prev => ({ ...prev, size: settings.defaultSize }));
   }, [settings.defaultSize]);
 
+  // Check URL parameters for shared content on initial mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const share = urlParams.get('share');
+    if (share) {
+      setShareId(share);
+    }
+  }, []);
+
   // Command palette keyboard shortcut listener (CMD+K or CTRL+K)
   useKeyPress('k', (e) => {
     e.preventDefault();
@@ -153,6 +168,10 @@ export default function App() {
   });
   useKeyPress('e', () => {
     setActiveTab('export');
+    scrollToWorkspace();
+  });
+  useKeyPress('c', () => {
+    setActiveTab('cloud');
     scrollToWorkspace();
   });
   useKeyPress('?', (e) => {
@@ -268,6 +287,7 @@ export default function App() {
 
   const tabsList = [
     { id: 'generate', label: 'Generate', icon: Compass },
+    { id: 'cloud', label: 'Cloud Share', icon: CloudUpload },
     { id: 'customize', label: 'Customize', icon: Palette },
     { id: 'decode', label: 'Decode', icon: ListFilter },
     { id: 'inspect', label: 'Inspect', icon: Info },
@@ -275,6 +295,10 @@ export default function App() {
     { id: 'history', label: 'History', icon: History },
     { id: 'help', label: 'Help', icon: HelpCircle },
   ];
+
+  if (shareId) {
+    return <PublicShareViewer shareId={shareId} />;
+  }
 
   return (
     <div className="min-h-screen bg-bg-light dark:bg-bg-dark text-black dark:text-white transition-colors duration-300">
@@ -366,15 +390,18 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Feature Panel Column */}
-          <div className={`${activeTab === 'generate' || activeTab === 'customize' || activeTab === 'export' ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2 }}
-              >
+          {(() => {
+            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'cloud' && cloudView === 'editor') || (activeTab === 'export' && exportMode === 'single');
+            return (
+              <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.2 }}
+                  >
                 {/* A. Generate View */}
                 {activeTab === 'generate' && (
                   <div className="space-y-6">
@@ -412,6 +439,19 @@ export default function App() {
                 {activeTab === 'customize' && (
                   <CustomizationPanel options={options} setOptions={setOptions} />
                 )}
+                
+                {/* H. Cloud Share View */}
+                {activeTab === 'cloud' && (
+                  <CloudShareTab
+                    onLinkGenerated={(link) => {
+                      setQrText(link);
+                      setQrType('url');
+                    }}
+                    onViewDashboard={() => setCloudView('dashboard')}
+                    activeView={cloudView}
+                    setActiveView={setCloudView}
+                  />
+                )}
 
                 {/* C. Decode View */}
                 {activeTab === 'decode' && <DecoderTab />}
@@ -447,9 +487,11 @@ export default function App() {
               </motion.div>
             </AnimatePresence>
           </div>
+            );
+          })()}
 
           {/* Right Live Preview Sticky Column (Single Mode) */}
-          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
+          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'cloud' && cloudView === 'editor') || (activeTab === 'export' && exportMode === 'single')) && (
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
@@ -660,6 +702,14 @@ export default function App() {
                 settings.animationsEnabled ? 'translate-x-5' : 'translate-x-0'
               }`} />
             </button>
+          </div>
+
+          <hr className="border-neutral-200 dark:border-neutral-900" />
+
+          <div className="space-y-2">
+            <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Cloud Sharing Config</span>
+            <p className="text-[10px] text-neutral-400">Configure your custom Firebase database for image & message hosting.</p>
+            <FirebaseConfigForm />
           </div>
 
           <div className="border-t border-neutral-200 dark:border-neutral-900 pt-4 flex space-x-3">
