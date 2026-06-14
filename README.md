@@ -9,7 +9,7 @@
     Generate, customize, decode, and inspect QR codes with gorgeous styles, SVG exports, and advanced analytics. Lightning fast and built for the modern web.
   </p>
   <br />
-  <a href="https://qrstudio.vercel.app/">
+  <a href="https://qrstudiotool.vercel.app/">
     <img src="https://img.shields.io/badge/Live_Demo-Visit_QR_Studio-000000?style=for-the-badge&logo=vercel" alt="Live Demo" />
   </a>
   <br />
