@@ -12,7 +12,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, icon: Icon, childr
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-neutral-100 dark:border-neutral-900 last:border-0">
+    <div className="border-b border-neutral-200 dark:border-neutral-900 last:border-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between py-4 text-left focus:outline-none"
@@ -57,7 +57,7 @@ export const HelpSection: React.FC = () => {
         <p className="text-xs text-neutral-500 dark:text-neutral-400">Everything you need to know to generate scan-perfect QR codes.</p>
       </div>
 
-      <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark divide-y divide-neutral-100 dark:divide-neutral-900">
+      <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark divide-y divide-neutral-200 dark:divide-neutral-900">
         <AccordionItem title="What is a QR Code?" icon={HelpCircle}>
           <p>
             A <strong>QR Code</strong> (Quick Response Code) is a two-dimensional matrix barcode invented in 1994 by the Japanese company Denso Wave.

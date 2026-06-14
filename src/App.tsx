@@ -12,6 +12,8 @@ import {
   Check,
   Zap,
   Info,
+  Layers,
+  QrCode,
 } from 'lucide-react';
 
 // Common UI Components
@@ -55,6 +57,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('generate');
   const [qrText, setQrText] = useState<string>('https://google.com');
   const [qrType, setQrType] = useState<string>('url');
+  
+  // Export Mode State
+  const [exportMode, setExportMode] = useState<'single' | 'batch'>('single');
+  const [batchTexts, setBatchTexts] = useState<string>('https://google.com\nhttps://youtube.com\nhttps://github.com');
+
 
   // Cache generated outputs for each format category to prevent tab unmounting resets
   const [qrTextCache, setQrTextCache] = useState<Record<string, string>>({
@@ -99,12 +106,12 @@ export default function App() {
     setQrTextCache((prev) => ({ ...prev, [qrType]: textValue }));
   }, [qrType]);
 
-  // Redraw QR code when text or styles change
+  // Redraw QR code when text, styles, or activeTab changes (to handle canvas remounting)
   useEffect(() => {
     if (canvasRef.current) {
       drawCustomQR(canvasRef.current, qrText, options);
     }
-  }, [qrText, options]);
+  }, [qrText, options, activeTab, exportMode]);
 
   // Apply default size from settings to options when app loads
   useEffect(() => {
@@ -257,7 +264,7 @@ export default function App() {
     <div className="min-h-screen bg-bg-light dark:bg-bg-dark text-black dark:text-white transition-colors duration-300">
       
       {/* 1. Header Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/60 dark:bg-[#0A0A0A]/60 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-900 px-4 md:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/60 dark:bg-[#0A0A0A]/60 backdrop-blur-xl border-b border-neutral-200 dark:border-neutral-900 px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center space-x-3.5">
           <img src="/icon.svg" alt="QR Studio Brand Icon" className="h-8 w-8 object-contain" />
           <div>
@@ -306,7 +313,7 @@ export default function App() {
         className="max-w-7xl mx-auto px-4 md:px-8 py-16 space-y-8 min-h-[80vh] scroll-mt-20"
       >
         {/* Workspace header & dynamic title */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-neutral-100 dark:border-neutral-900 pb-5">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-neutral-200 dark:border-neutral-900 pb-5">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white capitalize">
               {activeTab === 'generate' ? 'QR Code Data Input' : `${activeTab} Workspace`}
@@ -317,7 +324,7 @@ export default function App() {
           </div>
           
           {/* Tabs bar */}
-          <div className="flex flex-wrap gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 w-fit shadow-premium dark:shadow-premium-dark select-none">
+          <div className="flex flex-wrap gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-fit shadow-premium dark:shadow-premium-dark select-none">
             {tabsList.map((t) => {
               const Icon = t.icon;
               const isActive = activeTab === t.id;
@@ -343,7 +350,7 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Feature Panel Column */}
-          <div className="lg:col-span-8 bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/40 dark:border-white/5 shadow-glass dark:shadow-glass-dark">
+          <div className={`${activeTab === 'generate' || activeTab === 'customize' || activeTab === 'export' ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -380,7 +387,7 @@ export default function App() {
                       />
                     </div>
                     
-                    <hr className="border-neutral-100 dark:border-neutral-900" />
+                    <hr className="border-neutral-200 dark:border-neutral-900" />
                     {renderGeneratorForm()}
                   </div>
                 )}
@@ -397,7 +404,16 @@ export default function App() {
                 {activeTab === 'inspect' && <InspectorTab />}
 
                 {/* E. Export View */}
-                {activeTab === 'export' && <ExportPanel text={qrText} options={options} />}
+                {activeTab === 'export' && (
+                  <ExportPanel 
+                    text={qrText} 
+                    options={options}
+                    exportMode={exportMode}
+                    setExportMode={setExportMode}
+                    batchTexts={batchTexts}
+                    setBatchTexts={setBatchTexts}
+                  />
+                )}
 
                 {/* F. History View */}
                 {activeTab === 'history' && (
@@ -416,13 +432,13 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-          {/* Right Live Preview Sticky Column (Only shown on generating/customizing/exporting) */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-            {(activeTab === 'generate' || activeTab === 'customize' || activeTab === 'export') && (
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
+          {/* Right Live Preview Sticky Column (Single Mode) */}
+          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
+            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400 select-none">Live Canvas Preview</span>
-                  <div className="flex items-center space-x-1 border border-neutral-100 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 px-2 py-0.5 rounded-full text-[9px] font-bold text-neutral-500 uppercase">
+                  <div className="flex items-center space-x-1 border border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 px-2 py-0.5 rounded-full text-[9px] font-bold text-neutral-500 uppercase">
                     <Zap className="h-3 w-3 text-amber-500 fill-current" />
                     <span>Instant Update</span>
                   </div>
@@ -434,7 +450,7 @@ export default function App() {
                 </div>
 
                 {/* Save design to history form */}
-                <div className="w-full mt-6 space-y-3 pt-4 border-t border-neutral-100 dark:border-neutral-900">
+                <div className="w-full mt-6 space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-900">
                   <div>
                     <Label htmlFor="project-name-input">Save design project name</Label>
                     <div className="flex space-x-2">
@@ -459,7 +475,7 @@ export default function App() {
                 </div>
 
                 {/* Stats spec details */}
-                <div className="w-full mt-4 space-y-2 text-[10px] font-semibold text-neutral-400 select-none uppercase tracking-wider pt-4 border-t border-neutral-100 dark:border-neutral-900">
+                <div className="w-full mt-4 space-y-2 text-[10px] font-semibold text-neutral-400 select-none uppercase tracking-wider pt-4 border-t border-neutral-200 dark:border-neutral-900">
                   <div className="flex justify-between">
                     <span>Active Size</span>
                     <span className="text-neutral-600 dark:text-neutral-300 font-mono font-bold">{options.size} px</span>
@@ -474,8 +490,58 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Right Dashboard Sticky Column (Batch Mode) */}
+          {activeTab === 'export' && exportMode === 'batch' && (
+            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
+                <div className="w-full flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400 select-none">Batch Overview</span>
+                  <div className="flex items-center space-x-1 border border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 px-2 py-0.5 rounded-full text-[9px] font-bold text-neutral-500 uppercase">
+                    <Layers className="h-3 w-3 text-accent" />
+                    <span>Multi-Thread</span>
+                  </div>
+                </div>
+
+                {/* Cool Stack Visual */}
+                <div className="w-full aspect-square max-w-[280px] bg-neutral-50 dark:bg-neutral-950 rounded-2xl border border-neutral-200 dark:border-neutral-850 p-4 flex flex-col items-center justify-center relative shadow-glass dark:shadow-glass-dark mb-2">
+                  <div className="relative w-32 h-32 mt-4">
+                    {/* Background card 2 */}
+                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-4 -translate-y-4 opacity-50 flex items-center justify-center" />
+                    {/* Background card 1 */}
+                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm transform translate-x-2 -translate-y-2 opacity-75 flex items-center justify-center" />
+                    {/* Foreground card */}
+                    <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A] border-2 border-accent rounded-xl shadow-lg flex flex-col items-center justify-center z-10">
+                      <QrCode className="h-12 w-12 text-neutral-800 dark:text-neutral-200 mb-2" />
+                      <div className="flex space-x-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse delay-75" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse delay-150" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats spec details */}
+                <div className="w-full mt-4 space-y-3 text-[10px] font-semibold text-neutral-400 select-none uppercase tracking-wider pt-4 border-t border-neutral-200 dark:border-neutral-900">
+                  <div className="flex justify-between items-center">
+                    <span>Valid Items Detected</span>
+                    <span className="text-accent bg-accent/10 px-2 py-0.5 rounded font-mono font-bold text-xs">{batchTexts.split('\n').filter(t => t.trim()).length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Estimated Processing</span>
+                    <span className="text-neutral-600 dark:text-neutral-300 font-mono font-bold">~{((batchTexts.split('\n').filter(t => t.trim()).length * 350) / 1000).toFixed(1)}s</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Output Type</span>
+                    <span className="text-neutral-600 dark:text-neutral-300 font-mono font-bold">Zip Archive / Multi</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -547,7 +613,7 @@ export default function App() {
             </button>
           </div>
 
-          <div className="border-t border-neutral-100 dark:border-neutral-900 pt-4 flex space-x-3">
+          <div className="border-t border-neutral-200 dark:border-neutral-900 pt-4 flex space-x-3">
             <Button
               onClick={handleResetSettings}
               variant="outline"
@@ -567,7 +633,7 @@ export default function App() {
       </Modal>
 
       {/* 7. Footer */}
-      <footer className="border-t border-neutral-100 dark:border-neutral-900 py-12 px-4 md:px-8 bg-neutral-50/50 dark:bg-neutral-950/20 text-center space-y-3.5 select-none z-10 relative">
+      <footer className="border-t border-neutral-200 dark:border-neutral-900 py-12 px-4 md:px-8 bg-neutral-50/50 dark:bg-neutral-950/20 text-center space-y-3.5 select-none z-10 relative">
         <div className="flex justify-center space-x-2 items-center text-xs font-semibold text-neutral-400">
           <span>QR Studio</span>
           <span>•</span>

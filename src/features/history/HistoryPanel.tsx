@@ -87,7 +87,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="group flex items-center justify-between p-4 bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-2xl hover:border-accent/30 hover:shadow-premium dark:hover:shadow-premium-dark transition-all"
+                className="group flex items-center justify-between p-4 bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-2xl hover:border-accent/30 hover:shadow-premium dark:hover:shadow-premium-dark transition-all"
               >
                 {/* Info block */}
                 <div
@@ -137,7 +137,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-20 border border-neutral-100 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10 text-center"
+              className="flex flex-col items-center justify-center py-20 border border-neutral-200 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10 text-center"
             >
               <History className="h-9 w-9 text-neutral-350 dark:text-neutral-800 mb-3" />
               <span className="text-sm font-medium text-neutral-400">

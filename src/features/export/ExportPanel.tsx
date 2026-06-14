@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Select, Label, Input } from '../../components/ui/Input';
-import { downloadCanvas, generateSVG, exportToPDF, drawCustomQR } from '../../utils/qrUtils';
+import JSZip from 'jszip';
+import { downloadCanvas, generateSVG, exportToPDF, drawCustomQR, getCanvasBlob, getPdfBlob } from '../../utils/qrUtils';
 import type { QRStyleOptions } from '../../utils/qrUtils';
-import { Download, Layers, ShieldCheck, ListPlus, FileCheck } from 'lucide-react';
+import { Download, Layers, ShieldCheck, ListPlus, FileCheck, FileCode, CopyPlus } from 'lucide-react';
 
 interface ExportPanelProps {
   text: string;
   options: QRStyleOptions;
+  exportMode: 'single' | 'batch';
+  setExportMode: (mode: 'single' | 'batch') => void;
+  batchTexts: string;
+  setBatchTexts: (texts: string) => void;
 }
 
-export const ExportPanel: React.FC<ExportPanelProps> = ({ text, options }) => {
+export const ExportPanel: React.FC<ExportPanelProps> = ({ text, options, exportMode, setExportMode, batchTexts, setBatchTexts }) => {
   const [exportFormat, setExportFormat] = useState<'png' | 'svg' | 'jpeg' | 'webp' | 'pdf'>('png');
   const [exportSize, setExportSize] = useState<number>(1024);
   const [isExporting, setIsExporting] = useState(false);
 
   // Batch Export states
-  const [batchTexts, setBatchTexts] = useState<string>('https://google.com\nhttps://youtube.com\nhttps://github.com');
   const [batchPrefix, setBatchPrefix] = useState('qr-studio');
   const [batchStatus, setBatchStatus] = useState<string | null>(null);
 
@@ -59,53 +63,63 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ text, options }) => {
       return;
     }
 
-    setBatchStatus(`Generating ${items.length} QR codes...`);
+    setBatchStatus(`Zipping ${items.length} QR codes...`);
+    setIsExporting(true);
     
-    // Successive trigger with 300ms intervals to bypass browser blockings
-    for (let i = 0; i < items.length; i++) {
-      const activeText = items[i];
-      const filename = `${batchPrefix}-${i + 1}`;
+    try {
+      const zip = new JSZip();
+      const folderName = `${batchPrefix}-batch`;
+      const folder = zip.folder(folderName);
+      
+      if (!folder) throw new Error("Could not create zip folder");
 
-      await new Promise<void>((resolve) => {
-        setTimeout(async () => {
-          try {
-            if (exportFormat === 'svg') {
-              const svgString = generateSVG(activeText, { ...options, size: exportSize });
-              const blob = new Blob([svgString], { type: 'image/svg+xml' });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.download = `${filename}.svg`;
-              link.href = url;
-              link.click();
-              URL.revokeObjectURL(url);
-            } else {
-              const tempCanvas = document.createElement('canvas');
-              await drawCustomQR(tempCanvas, activeText, { ...options, size: exportSize });
-              if (exportFormat === 'pdf') {
-                exportToPDF(tempCanvas, filename);
-              } else {
-                downloadCanvas(tempCanvas, exportFormat, filename);
-              }
+      for (let i = 0; i < items.length; i++) {
+        const activeText = items[i];
+        const filename = `${batchPrefix}-${i + 1}`;
+
+        if (exportFormat === 'svg') {
+          const svgString = generateSVG(activeText, { ...options, size: exportSize });
+          folder.file(`${filename}.svg`, svgString);
+        } else {
+          const tempCanvas = document.createElement('canvas');
+          await drawCustomQR(tempCanvas, activeText, { ...options, size: exportSize });
+          
+          if (exportFormat === 'pdf') {
+            const pdfBlob = getPdfBlob(tempCanvas);
+            folder.file(`${filename}.pdf`, pdfBlob);
+          } else {
+            const canvasBlob = await getCanvasBlob(tempCanvas, exportFormat);
+            if (canvasBlob) {
+              folder.file(`${filename}.${exportFormat}`, canvasBlob);
             }
-          } catch (e) {
-            console.error('Batch item failed:', activeText, e);
           }
-          resolve();
-        }, i * 350);
-      });
-    }
+        }
+      }
 
-    setBatchStatus(`Success! Downloaded ${items.length} files.`);
-    setTimeout(() => setBatchStatus(null), 5000);
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.download = `${folderName}.zip`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      setBatchStatus(`Success! Downloaded ${items.length} files in a ZIP.`);
+    } catch (e) {
+      console.error('Batch zip failed:', e);
+      setBatchStatus('Error generating ZIP file.');
+    } finally {
+      setIsExporting(false);
+      setTimeout(() => setBatchStatus(null), 5000);
+    }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* 1. Single QR Exporter */}
-      <div className="lg:col-span-6 space-y-6">
-        <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Single File Export</h4>
-        
-        <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark space-y-5">
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* 1. Shared Export Settings */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Step 1: Export Settings</h4>
+        <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="export-fmt-select">File Format</Label>
@@ -138,76 +152,110 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ text, options }) => {
               />
             </div>
           </div>
-
-          <div className="space-y-3.5 pt-1">
-            <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 select-none">
-              <Layers className="h-4.5 w-4.5 text-accent" />
-              <span>Vectors support infinite zoom without blurring (SVG format).</span>
-            </div>
-            <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 select-none">
-              <ShieldCheck className="h-4.5 w-4.5 text-success" />
-              <span>Lightning fast processing. Ready to use anywhere.</span>
-            </div>
-          </div>
-
-          <Button
-            onClick={triggerExport}
-            disabled={isExporting}
-            variant="accent"
-            className="w-full space-x-2 py-3"
-          >
-            <Download className="h-4.5 w-4.5" />
-            <span>{isExporting ? 'Exporting...' : 'Download Custom QR'}</span>
-          </Button>
         </div>
       </div>
 
-      {/* 2. Batch QR Exporter */}
-      <div className="lg:col-span-6 space-y-6">
-        <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Batch QR Generator</h4>
-        
-        <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark space-y-5">
-          <div>
-            <Label htmlFor="batch-prefix">File Output Name Prefix</Label>
-            <Input
-              id="batch-prefix"
-              value={batchPrefix}
-              onChange={(e) => setBatchPrefix(e.target.value)}
-              placeholder="e.g. ticket-qr"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="batch-inputs-text">Batch Datasets (One per line)</Label>
-            <textarea
-              id="batch-inputs-text"
-              rows={4}
-              value={batchTexts}
-              onChange={(e) => setBatchTexts(e.target.value)}
-              placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none font-mono"
-            />
-            <p className="text-[10px] text-neutral-400 mt-1.5">
-              Each line translates to an independent QR file formatted in your chosen styling presets above.
-            </p>
-          </div>
-
-          {batchStatus && (
-            <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-semibold">
-              <FileCheck className="h-4.5 w-4.5" />
-              <span>{batchStatus}</span>
-            </div>
-          )}
-
-          <Button
-            onClick={triggerBatchExport}
-            variant="outline"
-            className="w-full space-x-2 py-3 border-neutral-200 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200"
+      {/* 2. Mode Selector */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Step 2: Output Mode</h4>
+        <div className="flex p-1 bg-neutral-100 dark:bg-[#0A0A0A] rounded-2xl border border-neutral-200 dark:border-neutral-900">
+          <button
+            onClick={() => setExportMode('single')}
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 text-sm font-bold rounded-xl transition-all focus:outline-none ${
+              exportMode === 'single'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700'
+                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
           >
-            <ListPlus className="h-4.5 w-4.5 text-accent" />
-            <span>Generate & Download Batch</span>
-          </Button>
+            <FileCode className="h-4.5 w-4.5" />
+            <span>Single File</span>
+          </button>
+          <button
+            onClick={() => setExportMode('batch')}
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 text-sm font-bold rounded-xl transition-all focus:outline-none ${
+              exportMode === 'batch'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700'
+                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            <CopyPlus className="h-4.5 w-4.5" />
+            <span>Batch Process</span>
+          </button>
         </div>
+      </div>
+
+      {/* 3. Action Area */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Step 3: Generate</h4>
+        
+        {exportMode === 'single' ? (
+          <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark space-y-6">
+            <div className="space-y-3.5">
+              <div className="flex items-center space-x-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 select-none">
+                <div className="p-2 bg-accent/10 text-accent rounded-full"><Layers className="h-4 w-4" /></div>
+                <span>Vectors support infinite zoom without blurring (SVG format).</span>
+              </div>
+              <div className="flex items-center space-x-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 select-none">
+                <div className="p-2 bg-success/10 text-success rounded-full"><ShieldCheck className="h-4 w-4" /></div>
+                <span>Lightning fast processing. Ready to use anywhere.</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={triggerExport}
+              disabled={isExporting}
+              variant="accent"
+              className="w-full space-x-2 py-3.5"
+            >
+              <Download className="h-5 w-5" />
+              <span className="text-sm font-bold">{isExporting ? 'Exporting...' : 'Download Custom QR'}</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark space-y-6">
+            <div>
+              <Label htmlFor="batch-prefix">File Output Name Prefix</Label>
+              <Input
+                id="batch-prefix"
+                value={batchPrefix}
+                onChange={(e) => setBatchPrefix(e.target.value)}
+                placeholder="e.g. ticket-qr"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="batch-inputs-text">Batch Datasets (One per line)</Label>
+              <textarea
+                id="batch-inputs-text"
+                rows={4}
+                value={batchTexts}
+                onChange={(e) => setBatchTexts(e.target.value)}
+                placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none font-mono"
+              />
+              <p className="text-[10px] text-neutral-400 mt-2">
+                Each line translates to an independent QR file formatted in your chosen styling presets above.
+              </p>
+            </div>
+
+            {batchStatus && (
+              <div className="flex items-center space-x-2.5 p-3.5 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-semibold">
+                <FileCheck className="h-4.5 w-4.5" />
+                <span>{batchStatus}</span>
+              </div>
+            )}
+
+            <Button
+              onClick={triggerBatchExport}
+              disabled={isExporting}
+              variant="primary"
+              className="w-full space-x-2 py-3.5"
+            >
+              {isExporting ? <Download className="h-5 w-5 animate-pulse" /> : <ListPlus className="h-5 w-5" />}
+              <span className="text-sm font-bold">{isExporting ? 'Processing Batch...' : 'Generate & Download Batch'}</span>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

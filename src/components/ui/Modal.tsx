@@ -46,13 +46,13 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 shadow-2xl z-10"
+            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 shadow-2xl z-10"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-900 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-900 px-6 py-4">
               <h3 id="modal-title" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
                 {title}
               </h3>

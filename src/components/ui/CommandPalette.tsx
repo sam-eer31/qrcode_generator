@@ -130,10 +130,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 shadow-2xl z-10"
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 shadow-2xl z-10"
           >
             {/* Search Input */}
-            <div className="flex items-center px-4 border-b border-neutral-100 dark:border-neutral-900">
+            <div className="flex items-center px-4 border-b border-neutral-200 dark:border-neutral-900">
               <Search className="h-5 w-5 text-neutral-400 mr-3 flex-shrink-0" />
               <input
                 ref={inputRef}
@@ -198,7 +198,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </div>
 
             {/* Footer hints */}
-            <div className="flex justify-between items-center px-4 py-3 border-t border-neutral-100 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 text-[10px] text-neutral-400 select-none">
+            <div className="flex justify-between items-center px-4 py-3 border-t border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 text-[10px] text-neutral-400 select-none">
               <div className="flex items-center space-x-3">
                 <span>↑↓ Navigate</span>
                 <span>↵ Select</span>

@@ -4,6 +4,18 @@ import { PRESETS } from '../../utils/qrUtils';
 import type { QRStyleOptions } from '../../utils/qrUtils';
 import { Upload, X, ShieldAlert, RotateCw } from 'lucide-react';
 
+const FAMOUS_LOGOS = [
+  { name: 'WhatsApp', url: 'https://cdn.simpleicons.org/whatsapp/25D366' },
+  { name: 'YouTube', url: 'https://cdn.simpleicons.org/youtube/FF0000' },
+  { name: 'Instagram', url: 'https://cdn.simpleicons.org/instagram/E4405F' },
+  { name: 'Facebook', url: 'https://cdn.simpleicons.org/facebook/1877F2' },
+  { name: 'X (Twitter)', url: 'https://cdn.simpleicons.org/x/000000' },
+  { name: 'LinkedIn', url: 'data:image/svg+xml;utf8,%3Csvg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"%3E%3Ctitle%3ELinkedIn%3C/title%3E%3Cpath fill="%230A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/%3E%3C/svg%3E' },
+  { name: 'GitHub', url: 'https://cdn.simpleicons.org/github/181717' },
+  { name: 'Discord', url: 'https://cdn.simpleicons.org/discord/5865F2' },
+  { name: 'Spotify', url: 'https://cdn.simpleicons.org/spotify/1DB954' },
+  { name: 'Telegram', url: 'https://cdn.simpleicons.org/telegram/26A5E4' },
+];
 interface CustomizationPanelProps {
   options: QRStyleOptions;
   setOptions: React.Dispatch<React.SetStateAction<QRStyleOptions>>;
@@ -77,7 +89,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
         </div>
       </div>
 
-      <hr className="border-neutral-100 dark:border-neutral-900" />
+      <hr className="border-neutral-200 dark:border-neutral-900" />
 
       {/* 2. Shape Settings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -111,7 +123,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
         </div>
       </div>
 
-      <hr className="border-neutral-100 dark:border-neutral-900" />
+      <hr className="border-neutral-200 dark:border-neutral-900" />
 
       {/* 3. Colors Panel */}
       <div className="space-y-4">
@@ -237,7 +249,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
         </div>
       </div>
 
-      <hr className="border-neutral-100 dark:border-neutral-900" />
+      <hr className="border-neutral-200 dark:border-neutral-900" />
 
       {/* 4. Logo Settings */}
       <div className="space-y-4">
@@ -262,14 +274,32 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center border border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-2xl py-6 bg-white/50 dark:bg-black/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all focus:outline-none"
-            >
-              <Upload className="h-6 w-6 text-neutral-400 mb-2" />
-              <span className="text-xs font-semibold tracking-wide uppercase text-neutral-600 dark:text-neutral-400">Upload Image / Icon</span>
-              <span className="text-[10px] text-neutral-400 mt-0.5">PNG, JPG or SVG (Max 1MB)</span>
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center border border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-2xl py-6 bg-white/50 dark:bg-black/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all focus:outline-none"
+              >
+                <Upload className="h-6 w-6 text-neutral-400 mb-2" />
+                <span className="text-xs font-semibold tracking-wide uppercase text-neutral-600 dark:text-neutral-400">Upload Image / Icon</span>
+                <span className="text-[10px] text-neutral-400 mt-0.5">PNG, JPG or SVG (Max 1MB)</span>
+              </button>
+              
+              <div className="pt-2">
+                <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 block">Or choose a popular brand:</span>
+                <div className="flex flex-wrap gap-2">
+                  {FAMOUS_LOGOS.map((logo) => (
+                    <button
+                      key={logo.name}
+                      onClick={() => updateOption('logoUrl', logo.url)}
+                      className="p-2 border border-neutral-200 bg-white rounded-xl hover:border-accent hover:shadow-md transition-all group focus:outline-none shadow-sm"
+                      title={`Add ${logo.name} logo`}
+                    >
+                      <img src={logo.url} alt={logo.name} className="h-5 w-5 object-contain group-hover:scale-110 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
           <input
             ref={fileInputRef}
@@ -321,7 +351,7 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
         )}
       </div>
 
-      <hr className="border-neutral-100 dark:border-neutral-900" />
+      <hr className="border-neutral-200 dark:border-neutral-900" />
 
       {/* 5. General Sizing & Margin */}
       <div className="space-y-4">

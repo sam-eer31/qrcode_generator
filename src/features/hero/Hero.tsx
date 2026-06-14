@@ -132,7 +132,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             <motion.div
               style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
               transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-              className="relative w-full h-full rounded-3xl p-6 bg-white/40 dark:bg-[#0E0E0E]/40 backdrop-blur-xl border border-white/50 dark:border-white/5 shadow-2xl flex flex-col items-center justify-center group"
+              className="relative w-full h-full rounded-3xl p-6 bg-white/40 dark:bg-[#0E0E0E]/40 backdrop-blur-xl border border-neutral-200 dark:border-white/5 shadow-2xl flex flex-col items-center justify-center group"
             >
               {/* Glowing ring overlay inside card */}
               <div className="absolute inset-0 rounded-3xl border border-accent/10 pointer-events-none group-hover:border-accent/30 transition-colors duration-300" />
@@ -147,7 +147,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
               {/* Holographic matrix representation */}
               <div 
                 style={{ transform: 'translateZ(30px)' }}
-                className="w-[200px] h-[200px] flex items-center justify-center relative bg-white dark:bg-black rounded-2xl p-4 shadow-glass dark:shadow-glass-dark border border-neutral-100 dark:border-neutral-900"
+                className="w-[200px] h-[200px] flex items-center justify-center relative bg-white dark:bg-black rounded-2xl p-4 shadow-glass dark:shadow-glass-dark border border-neutral-200 dark:border-neutral-900"
               >
                 {/* Simulated QR matrix elements that blink/glow */}
                 <div className="grid grid-cols-5 gap-3 opacity-80">
@@ -183,13 +183,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
                 </div>
               </div>
 
-              {/* Perspective floating text */}
-              <div 
-                style={{ transform: 'translateZ(15px)' }}
-                className="mt-6 text-[10px] font-bold tracking-widest text-neutral-400 dark:text-neutral-500 uppercase select-none"
-              >
-                Interactive 3D Engine
-              </div>
+
             </motion.div>
           </motion.div>
         </div>

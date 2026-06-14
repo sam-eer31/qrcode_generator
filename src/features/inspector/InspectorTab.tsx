@@ -135,7 +135,7 @@ export const InspectorTab: React.FC = () => {
         )}
 
         {qrObject && (
-          <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-5 shadow-premium dark:shadow-premium-dark space-y-4">
+          <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-5 shadow-premium dark:shadow-premium-dark space-y-4">
             <h5 className="text-xs font-semibold tracking-wide uppercase text-neutral-400">Technical Glossary</h5>
             <div className="space-y-3.5 text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
               <div>
@@ -167,11 +167,11 @@ export const InspectorTab: React.FC = () => {
           >
             {/* Tech stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
                 <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">QR Version</span>
                 <p className="text-2xl font-black text-accent mt-0.5">V{qrObject.version}</p>
               </div>
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
                 <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">Error Class</span>
                 <p className="text-2xl font-black text-secondary mt-0.5">
                   {qrObject.errorCorrectionLevel?.bit === 1 ? 'L' : 
@@ -179,11 +179,11 @@ export const InspectorTab: React.FC = () => {
                    qrObject.errorCorrectionLevel?.bit === 3 ? 'Q' : 'H'}
                 </p>
               </div>
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
                 <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">Module Count</span>
                 <p className="text-xl font-black text-neutral-800 dark:text-neutral-100 mt-1.5">{qrObject.modules.size} × {qrObject.modules.size}</p>
               </div>
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 p-4 rounded-2xl shadow-premium dark:shadow-premium-dark">
                 <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">Data Cells</span>
                 <p className="text-xl font-black text-neutral-800 dark:text-neutral-100 mt-1.5">{qrObject.modules.data.filter((b: number) => b === 1).length}</p>
               </div>
@@ -192,7 +192,7 @@ export const InspectorTab: React.FC = () => {
             {/* Interactive Module Matrix */}
             <div className="space-y-2">
               <span className="text-xs font-semibold tracking-wide uppercase text-neutral-400">Reconstructed Module Matrix</span>
-              <div className="flex flex-col items-center bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark">
+              <div className="flex flex-col items-center bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark">
                 <div
                   className="grid gap-px bg-neutral-100 dark:bg-neutral-950 p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 max-w-[280px]"
                   style={{
@@ -250,10 +250,10 @@ export const InspectorTab: React.FC = () => {
             {/* Print & Distance Recommendations */}
             <div className="space-y-2">
               <span className="text-xs font-semibold tracking-wide uppercase text-neutral-400 font-sans">Print & Scan Recommendations</span>
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-neutral-100 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
+                    <tr className="border-b border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
                       <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Print Size (W × H)</th>
                       <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Recommended Scan Distance</th>
                       <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Target Use Cases</th>
@@ -261,7 +261,7 @@ export const InspectorTab: React.FC = () => {
                   </thead>
                   <tbody>
                     {getPrintRecommendations(qrObject.version).map((row, index) => (
-                      <tr key={index} className="border-b border-neutral-100 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors text-xs font-medium text-neutral-800 dark:text-neutral-200">
+                      <tr key={index} className="border-b border-neutral-200 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors text-xs font-medium text-neutral-800 dark:text-neutral-200">
                         <td className="px-5 py-3.5 font-mono">{row.printSize}</td>
                         <td className="px-5 py-3.5 font-mono">{row.distance}</td>
                         <td className="px-5 py-3.5 text-neutral-500 dark:text-neutral-450">{row.useCase}</td>
@@ -273,7 +273,7 @@ export const InspectorTab: React.FC = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 border border-neutral-100 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10">
+          <div className="flex flex-col items-center justify-center py-20 border border-neutral-200 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10">
             <LayoutGrid className="h-10 w-10 text-neutral-300 dark:text-neutral-800 mb-3" />
             <span className="text-sm font-medium text-neutral-400">Awaiting QR scan file load</span>
             <p className="text-[10px] text-neutral-400/85 mt-1 max-w-[240px] text-center leading-relaxed">

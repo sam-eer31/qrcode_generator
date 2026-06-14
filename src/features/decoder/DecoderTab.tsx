@@ -192,17 +192,17 @@ export const DecoderTab: React.FC = () => {
             </div>
 
             {/* Key-Value Details */}
-            <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-100 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
+            <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-neutral-100 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
+                  <tr className="border-b border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Parameter</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Detected Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(parsedInfo.details).map(([key, val]) => (
-                    <tr key={key} className="border-b border-neutral-100 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors">
+                    <tr key={key} className="border-b border-neutral-200 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors">
                       <td className="px-5 py-3.5 text-xs font-bold text-neutral-600 dark:text-neutral-400 capitalize">{key}</td>
                       <td className="px-5 py-3.5 text-xs font-mono font-medium text-neutral-900 dark:text-neutral-200 text-break-all select-all">{val || '(Empty)'}</td>
                     </tr>
@@ -220,7 +220,7 @@ export const DecoderTab: React.FC = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 border border-neutral-100 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10">
+          <div className="flex flex-col items-center justify-center py-16 border border-neutral-200 dark:border-neutral-900 rounded-3xl bg-white/20 dark:bg-[#0C0C0C]/10">
             <FileCode className="h-10 w-10 text-neutral-300 dark:text-neutral-800 mb-3" />
             <span className="text-sm font-medium text-neutral-400">Awaiting QR scan file upload</span>
             <p className="text-[10px] text-neutral-400/80 mt-1 max-w-[240px] text-center leading-relaxed">
