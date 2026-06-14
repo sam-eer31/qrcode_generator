@@ -306,10 +306,10 @@ export default function App() {
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center justify-center h-10 w-10 rounded-full border border-neutral-200/50 dark:border-neutral-800/50 bg-white/50 dark:bg-black/50 backdrop-blur-md text-neutral-800 dark:text-neutral-250 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors shadow-premium focus:outline-none"
+            className="flex items-center justify-center h-10 w-10 rounded-full border border-neutral-200/50 dark:border-neutral-800/50 bg-white/50 dark:bg-black/50 backdrop-blur-md text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors shadow-premium focus:outline-none"
             aria-label="Open settings panel"
           >
-            <Settings className="h-4.5 w-4.5" />
+            <Settings className="h-5 w-5" />
           </button>
         </div>
       </header>
