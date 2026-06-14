@@ -439,14 +439,11 @@ export default function App() {
                   </div>
                 )}
 
-                {/* H. Cloud Share View */}
+                {/* E. Cloud Share Tab */}
                 {activeTab === 'cloud' && (
-                  <CloudShareView
-                    onLinkGenerated={(link) => {
-                      setQrText(link);
-                      setQrType('url');
-                      setActiveTab('generate');
-                      scrollToWorkspace();
+                  <CloudShareView 
+                    onChange={(link) => {
+                      handleDataChange({ type: 'url', value: link });
                     }}
                   />
                 )}

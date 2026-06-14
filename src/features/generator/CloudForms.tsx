@@ -98,6 +98,10 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         setUploadError('Only image uploads are supported.');
         return;
       }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Image exceeds the 5MB size limit. Please choose a smaller file.');
+        return;
+      }
       setSelectedFile(file);
       setFilePreview(URL.createObjectURL(file));
       setUploadError('');
@@ -111,6 +115,10 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       const file = e.dataTransfer.files[0];
       if (!file.type.startsWith('image/')) {
         setUploadError('Only image uploads are supported.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Image exceeds the 5MB size limit. Please choose a smaller file.');
         return;
       }
       setSelectedFile(file);
