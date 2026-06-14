@@ -405,27 +405,43 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
     );
   }
 
-  return (
-    <div className="space-y-5 animate-scale-in">
-      <div className="space-y-2">
-        <Label>Write Note Message</Label>
-        <textarea rows={4} value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Write a message, contact details, or instructions..." className="w-full px-4 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 resize-none focus:ring-accent" />
-      </div>
+  const NOTE_THEMES = [
+    { id: 'ocean', name: 'Ocean Blue', bg: 'bg-gradient-to-br from-blue-500 to-cyan-500', text: 'text-white placeholder:text-white/60' },
+    { id: 'sunset', name: 'Sunset Glow', bg: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500', text: 'text-white placeholder:text-white/60' },
+    { id: 'forest', name: 'Emerald', bg: 'bg-gradient-to-br from-emerald-500 to-teal-600', text: 'text-white placeholder:text-white/60' },
+    { id: 'cyberpunk', name: 'Cyberpunk', bg: 'bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-600', text: 'text-white placeholder:text-white/60' },
+    { id: 'minimalist', name: 'Dark Mode', bg: 'bg-neutral-900 border border-neutral-800', text: 'text-neutral-100 placeholder:text-neutral-500' }
+  ];
 
-      <div className="space-y-2">
-        <Label>Choose Note Theme</Label>
-        <div className="flex space-x-3 select-none pt-0.5">
-          {[
-            { id: 'ocean', name: 'Ocean Blue', bg: 'bg-gradient-to-br from-blue-500 to-cyan-500' },
-            { id: 'sunset', name: 'Sunset Glow', bg: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500' },
-            { id: 'forest', name: 'Emerald', bg: 'bg-gradient-to-br from-emerald-500 to-teal-600' },
-            { id: 'cyberpunk', name: 'Cyberpunk', bg: 'bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-600' },
-            { id: 'minimalist', name: 'Dark Mode', bg: 'bg-gradient-to-br from-neutral-800 to-neutral-950 border border-neutral-700/30' }
-          ].map((theme) => (
-            <button key={theme.id} onClick={() => setSelectedTheme(theme.id)} className={`relative h-9 w-9 rounded-full ${theme.bg} cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center`} title={theme.name}>
-              {selectedTheme === theme.id && <span className="h-3 w-3 rounded-full bg-white shadow-sm animate-scale-in" />}
-            </button>
-          ))}
+  const activeThemeObj = NOTE_THEMES.find(t => t.id === selectedTheme) || NOTE_THEMES[0];
+
+  return (
+    <div className="space-y-6 animate-scale-in">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label>Live Notepad</Label>
+          <div className="flex space-x-2 select-none">
+            {NOTE_THEMES.map((theme) => (
+              <button key={theme.id} onClick={() => setSelectedTheme(theme.id)} className={`relative h-6 w-6 rounded-full ${theme.bg} cursor-pointer shadow-sm hover:scale-110 active:scale-95 transition-all flex items-center justify-center`} title={theme.name}>
+                {selectedTheme === theme.id && <span className="h-2 w-2 rounded-full bg-white shadow-sm animate-scale-in" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* The Live Notepad Preview */}
+        <div className={`relative w-full rounded-2xl overflow-hidden transition-all duration-500 shadow-inner ${activeThemeObj.bg}`}>
+          {/* Subtle overlay for "notepad" texture */}
+          <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] mix-blend-overlay pointer-events-none" />
+          
+          <textarea 
+            rows={6} 
+            value={messageText} 
+            onChange={(e) => setMessageText(e.target.value)} 
+            placeholder="Start typing your note here..." 
+            className={`w-full p-6 text-sm font-medium resize-none bg-transparent outline-none transition-colors ${activeThemeObj.text}`} 
+            style={{ lineHeight: '1.8' }}
+          />
         </div>
       </div>
 
