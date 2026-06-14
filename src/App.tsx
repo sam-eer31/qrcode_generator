@@ -15,7 +15,6 @@ import {
   Layers,
   QrCode,
   Download,
-  CloudUpload,
 } from 'lucide-react';
 
 // Common UI Components
@@ -55,15 +54,17 @@ import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryPanel } from './features/history/HistoryPanel';
 import type { HistoryItem } from './features/history/HistoryPanel';
 import { HelpSection } from './features/help/HelpSection';
-import { CloudShareTab } from './features/generator/CloudShareTab';
 import { PublicShareViewer } from './features/generator/PublicShareViewer';
+import { HeaderAuth } from './components/HeaderAuth';
+import { CloudDashboard } from './features/generator/CloudDashboard';
+import { CloudImageForm, CloudNoteForm } from './features/generator/CloudForms';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('generate');
   const [qrText, setQrText] = useState<string>('https://google.com');
   const [qrType, setQrType] = useState<string>('url');
   const [shareId, setShareId] = useState<string | null>(null);
-  const [cloudView, setCloudView] = useState<'editor' | 'dashboard'>('editor');
+  const [showCloudDashboard, setShowCloudDashboard] = useState(false);
   
   // Export Mode State
   const [exportMode, setExportMode] = useState<'single' | 'batch'>('single');
@@ -82,6 +83,8 @@ export default function App() {
     vcard: 'BEGIN:VCARD\nVERSION:3.0\nN:Morgan;Alex;;;\nFN:Alex Morgan\nORG:QR Studio Corp\nTEL;TYPE=CELL:+1 (555) 019-2834\nEMAIL;TYPE=PREF,INTERNET:alex@qrstudio.dev\nURL:https://qrstudio.vercel.app\nEND:VCARD',
     calendar: 'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Product Launch Keynote\nDESCRIPTION:Unveiling QR Studio features.\nLOCATION:San Francisco, CA\nDTSTART:20260701T100000Z\nDTEND:20260701T120000Z\nEND:VEVENT\nEND:VCALENDAR',
     crypto: 'ethereum:0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    cloudImage: '',
+    cloudNote: '',
   });
   
   // Customization styling state
@@ -168,10 +171,6 @@ export default function App() {
   });
   useKeyPress('e', () => {
     setActiveTab('export');
-    scrollToWorkspace();
-  });
-  useKeyPress('c', () => {
-    setActiveTab('cloud');
     scrollToWorkspace();
   });
   useKeyPress('?', (e) => {
@@ -280,6 +279,10 @@ export default function App() {
         return <CalendarForm initialText={qrTextCache.calendar} onChange={handleTextChange} />;
       case 'crypto':
         return <CryptoForm initialText={qrTextCache.crypto} onChange={handleTextChange} />;
+      case 'cloudImage':
+        return <CloudImageForm onChange={handleTextChange} />;
+      case 'cloudNote':
+        return <CloudNoteForm onChange={handleTextChange} />;
       default:
         return <UrlForm initialText={qrTextCache.url} onChange={handleTextChange} />;
     }
@@ -287,7 +290,6 @@ export default function App() {
 
   const tabsList = [
     { id: 'generate', label: 'Generate', icon: Compass },
-    { id: 'cloud', label: 'Cloud Share', icon: CloudUpload },
     { id: 'customize', label: 'Customize', icon: Palette },
     { id: 'decode', label: 'Decode', icon: ListFilter },
     { id: 'inspect', label: 'Inspect', icon: Info },
@@ -325,6 +327,8 @@ export default function App() {
               ⌘K
             </kbd>
           </button>
+
+          <HeaderAuth onOpenDashboard={() => setShowCloudDashboard(true)} />
 
           <ThemeToggle />
 
@@ -391,7 +395,7 @@ export default function App() {
           
           {/* Left Feature Panel Column */}
           {(() => {
-            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'cloud' && cloudView === 'editor') || (activeTab === 'export' && exportMode === 'single');
+            const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single');
             return (
               <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
                 <AnimatePresence mode="wait">
@@ -426,6 +430,8 @@ export default function App() {
                           { value: 'vcard', label: 'vCard Contact Card' },
                           { value: 'calendar', label: 'Calendar Event Reminder' },
                           { value: 'crypto', label: 'Crypto Wallet Address' },
+                          { value: 'cloudImage', label: 'Cloud Image Upload' },
+                          { value: 'cloudNote', label: 'Cloud Note & Message' },
                         ]}
                       />
                     </div>
@@ -438,19 +444,6 @@ export default function App() {
                 {/* B. Customize View */}
                 {activeTab === 'customize' && (
                   <CustomizationPanel options={options} setOptions={setOptions} />
-                )}
-                
-                {/* H. Cloud Share View */}
-                {activeTab === 'cloud' && (
-                  <CloudShareTab
-                    onLinkGenerated={(link) => {
-                      setQrText(link);
-                      setQrType('url');
-                    }}
-                    onViewDashboard={() => setCloudView('dashboard')}
-                    activeView={cloudView}
-                    setActiveView={setCloudView}
-                  />
                 )}
 
                 {/* C. Decode View */}
@@ -491,7 +484,7 @@ export default function App() {
           })()}
 
           {/* Right Live Preview Sticky Column (Single Mode) */}
-          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'cloud' && cloudView === 'editor') || (activeTab === 'export' && exportMode === 'single')) && (
+          {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
@@ -636,7 +629,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* 5. Command Palette modal */}
       <CommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
@@ -648,6 +640,23 @@ export default function App() {
           if (item) handleLoadItem(item);
         }}
       />
+
+      {/* Cloud Dashboard Modal Overlay */}
+      <Modal
+        isOpen={showCloudDashboard}
+        onClose={() => setShowCloudDashboard(false)}
+        title="My Cloud Links"
+      >
+        <CloudDashboard 
+          onLoadGeneratedLink={(link) => {
+            setQrText(link);
+            setQrType('url');
+            setShowCloudDashboard(false);
+            setActiveTab('generate');
+            scrollToWorkspace();
+          }} 
+        />
+      </Modal>
 
       {/* 6. Settings Modal */}
       <Modal

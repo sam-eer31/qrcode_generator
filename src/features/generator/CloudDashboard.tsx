@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowLeft, 
   Trash2, 
   Eye, 
   Copy, 
@@ -13,8 +12,9 @@ import {
   Calendar
 } from 'lucide-react';
 import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { ref, deleteObject } from 'firebase/storage';
-import { db, storage } from '../../utils/firebase';
+import { db, storage, auth } from '../../utils/firebase';
 
 interface ShareData {
   id: string;
@@ -29,14 +29,10 @@ interface ShareData {
 }
 
 interface CloudDashboardProps {
-  currentUser: any;
-  onBackToCreator: () => void;
   onLoadGeneratedLink: (link: string) => void;
 }
 
 export const CloudDashboard: React.FC<CloudDashboardProps> = ({ 
-  currentUser, 
-  onBackToCreator,
   onLoadGeneratedLink
 }) => {
   const [loading, setLoading] = useState(true);
@@ -44,8 +40,8 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchUserItems = async () => {
-    if (!db || !currentUser) {
+  const fetchUserItems = async (user: any) => {
+    if (!db || !user) {
       setLoading(false);
       return;
     }
@@ -55,7 +51,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
       // Fetch shares without composite indexes (sorting client-side to prevent firestore index errors)
       const q = query(
         collection(db, 'shares'), 
-        where('creatorId', '==', currentUser.uid)
+        where('creatorId', '==', user.uid)
       );
       
       const querySnapshot = await getDocs(q);
@@ -75,8 +71,17 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
   };
 
   useEffect(() => {
-    fetchUserItems();
-  }, [currentUser]);
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth!, (user) => {
+      if (user) {
+        fetchUserItems(user);
+      } else {
+        setItems([]);
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleCopyLink = (itemId: string) => {
     const link = `${window.location.origin}${window.location.pathname}?share=${itemId}`;
@@ -140,16 +145,8 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = ({
       
       {/* Dashboard Top Header Navigation */}
       <div className="flex items-center justify-between pb-4 border-b border-neutral-200 dark:border-neutral-900">
-        <button
-          onClick={onBackToCreator}
-          className="flex items-center space-x-1.5 text-xs font-bold text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Upload Creator</span>
-        </button>
-        
         <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">
-          Cloud Dashboard
+          Your Cloud Links
         </h3>
       </div>
 
