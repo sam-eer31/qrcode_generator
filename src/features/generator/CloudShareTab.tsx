@@ -7,8 +7,6 @@ import {
   Lock, 
   User as UserIcon, 
   LogOut, 
-  Mail, 
-  Key, 
   AlertCircle, 
   Check, 
   ChevronRight,
@@ -17,8 +15,6 @@ import {
 } from 'lucide-react';
 import { 
   onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
   signOut, 
   GoogleAuthProvider,
   signInWithPopup
@@ -57,9 +53,6 @@ export const CloudShareTab: React.FC<CloudShareTabProps> = ({
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
 
   // Auth form states
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [authActionLoading, setAuthActionLoading] = useState(false);
@@ -177,31 +170,6 @@ export const CloudShareTab: React.FC<CloudShareTabProps> = ({
       setSelectedFile(file);
       setFilePreview(URL.createObjectURL(file));
       setUploadError('');
-    }
-  };
-
-  const handleAuthAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth) return;
-    setAuthActionLoading(true);
-    setAuthError('');
-    setAuthSuccess('');
-
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, authEmail, authPassword);
-        setAuthSuccess('Account registered successfully!');
-      } else {
-        await signInWithEmailAndPassword(auth, authEmail, authPassword);
-        setAuthSuccess('Logged in successfully!');
-      }
-      setAuthEmail('');
-      setAuthPassword('');
-    } catch (err: any) {
-      console.error(err);
-      setAuthError(err.message || 'Authentication failed.');
-    } finally {
-      setAuthActionLoading(false);
     }
   };
 
