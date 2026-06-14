@@ -14,10 +14,10 @@ import {
   Settings
 } from 'lucide-react';
 import { 
-  onAuthStateChanged, 
+  onAuthStateChanged,
   signOut, 
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithRedirect
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -54,7 +54,6 @@ export const CloudShareTab: React.FC<CloudShareTabProps> = ({
 
   // Auth form states
   const [authError, setAuthError] = useState('');
-  const [authSuccess, setAuthSuccess] = useState('');
   const [authActionLoading, setAuthActionLoading] = useState(false);
 
   // Upload progress and results
@@ -177,15 +176,13 @@ export const CloudShareTab: React.FC<CloudShareTabProps> = ({
     if (!auth) return;
     setAuthActionLoading(true);
     setAuthError('');
-    setAuthSuccess('');
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      setAuthSuccess('Logged in via Google!');
+      await signInWithRedirect(auth, provider);
+      // Note: The page will redirect to Google. When it comes back, onAuthStateChanged will pick up the user.
     } catch (err: any) {
       console.error(err);
       setAuthError(err.message || 'Google authentication failed.');
-    } finally {
       setAuthActionLoading(false);
     }
   };
@@ -613,12 +610,6 @@ export const CloudShareTab: React.FC<CloudShareTabProps> = ({
                   <span>{authActionLoading ? 'Connecting...' : 'Continue with Google'}</span>
                 </button>
               </div>
-
-              {authSuccess && (
-                <div className="text-[10px] text-success font-semibold text-center bg-success/10 py-1.5 rounded-lg animate-fade-in">
-                  {authSuccess}
-                </div>
-              )}
 
               {authError && (
                 <div className="text-[10px] text-red-500 font-semibold bg-red-500/10 p-2 rounded-lg leading-relaxed flex items-center space-x-1.5">
