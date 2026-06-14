@@ -29,7 +29,7 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { useKeyPress } from './hooks/useKeyPress';
 
 // Utilities & Options
-import { drawCustomQR, DEFAULT_STYLE, PRESETS, downloadCanvas, generateSVG, exportToPDF } from './utils/qrUtils';
+import { drawCustomQR, DEFAULT_STYLE, PRESETS } from './utils/qrUtils';
 import type { QRStyleOptions } from './utils/qrUtils';
 
 // Feature Views
