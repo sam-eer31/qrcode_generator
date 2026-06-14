@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
 import { ArrowDown } from 'lucide-react';
@@ -9,10 +9,20 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
-  // Mouse position tracking for 3D card tilt and background follow effect
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHoverable, setIsHoverable] = useState(true);
+
+  useEffect(() => {
+    // Detect if device supports hover (mouse vs touch)
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    setIsHoverable(mq.matches);
+    
+    const listener = (e: MediaQueryListEvent) => setIsHoverable(e.matches);
+    mq.addEventListener('change', listener);
+    return () => mq.removeEventListener('change', listener);
+  }, []);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const { clientX, clientY, currentTarget } = event;
@@ -38,21 +48,23 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
 
   return (
     <div
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseMove={isHoverable ? handleMouseMove : undefined}
+      onMouseLeave={isHoverable ? handleMouseLeave : undefined}
       className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden px-4 md:px-8 py-16 bg-[#FAFAFA] dark:bg-[#0A0A0A] transition-colors duration-300"
     >
       {/* Animated Background Line Grid */}
       <div className="absolute inset-0 bg-grid opacity-80 pointer-events-none" />
 
       {/* Mouse Follow Glow Spot */}
-      <div
-        className="absolute h-[500px] w-[500px] rounded-full pointer-events-none opacity-25 dark:opacity-10 blur-[130px] bg-gradient-to-r from-accent to-secondary transition-all duration-75 hidden md:block"
-        style={{
-          left: `${coords.x - 250}px`,
-          top: `${coords.y - 250}px`,
-        }}
-      />
+      {isHoverable && (
+        <div
+          className="absolute h-[500px] w-[500px] rounded-full pointer-events-none opacity-25 dark:opacity-10 blur-[130px] bg-gradient-to-r from-accent to-secondary transition-all duration-75 hidden md:block"
+          style={{
+            left: `${coords.x - 250}px`,
+            top: `${coords.y - 250}px`,
+          }}
+        />
+      )}
 
       {/* Ambient background blur circles */}
       <div className="absolute top-1/4 left-1/4 h-[350px] w-[350px] rounded-full bg-accent/10 blur-[100px] animate-pulse-subtle pointer-events-none" />
@@ -130,15 +142,16 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             className="perspective-[1000px] w-full max-w-[350px] aspect-square"
           >
             <motion.div
-              style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-              transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+              style={isHoverable ? { rotateX, rotateY, transformStyle: 'preserve-3d' } : { transformStyle: 'preserve-3d' }}
+              animate={!isHoverable ? { y: [0, -15, 0] } : undefined}
+              transition={!isHoverable ? { repeat: Infinity, duration: 6, ease: "easeInOut" } : { type: 'spring', stiffness: 200, damping: 25 }}
               className="relative w-full h-full rounded-3xl p-6 bg-white/40 dark:bg-[#0E0E0E]/40 backdrop-blur-xl border border-neutral-200 dark:border-white/5 shadow-2xl flex flex-col items-center justify-center group"
             >
               {/* Glowing ring overlay inside card */}
-              <div className="absolute inset-0 rounded-3xl border border-accent/10 pointer-events-none group-hover:border-accent/30 transition-colors duration-300" />
+              <div className={`absolute inset-0 rounded-3xl border pointer-events-none transition-colors duration-300 ${isHoverable ? 'border-accent/10 group-hover:border-accent/30' : 'border-accent/20'}`} />
               
               {/* Spinning Accent Border */}
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+              <div className={`absolute inset-0 rounded-3xl transition-opacity duration-300 pointer-events-none ${isHoverable ? 'opacity-0 group-hover:opacity-100' : 'opacity-50 animate-pulse-subtle'}`}
                    style={{
                      background: 'radial-gradient(circle at 50% 50%, rgba(109, 93, 252, 0.05) 0%, transparent 80%)'
                    }}
