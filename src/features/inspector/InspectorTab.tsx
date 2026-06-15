@@ -102,6 +102,13 @@ export const InspectorTab: React.FC = () => {
       {/* Upload area */}
       <div className="lg:col-span-5 space-y-4">
         <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Upload QR to Inspect</h4>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
         <div
           onDragOver={handleDragOver}
           onDrop={handleDrop}
@@ -122,13 +129,6 @@ export const InspectorTab: React.FC = () => {
               <span className="text-xs text-neutral-400 mt-1">Extract versions, errors, and module locations</span>
             </>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
         </div>
 
         {error && (

@@ -302,6 +302,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     <div className="space-y-5 animate-scale-in">
       <div className="space-y-3">
         <Label>Select Image File</Label>
+        <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
         {filePreview ? (
           <div className="relative rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-[16/9] flex items-center justify-center">
             <img src={filePreview} alt="Preview" className="max-h-full max-w-full object-contain" />
@@ -315,7 +316,6 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${dragOver ? 'border-accent bg-accent/5' : 'border-neutral-200 dark:border-neutral-850 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white/20 dark:bg-black/20'}`}
           >
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
             <div className="h-12 w-12 rounded-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 flex items-center justify-center mb-3"><CloudUpload className="w-5 h-5 text-accent" /></div>
             <span className="text-xs font-bold text-neutral-800 dark:text-white">Drag and drop your image here</span>
             <span className="text-[10px] font-medium text-neutral-450 mt-1">Supports PNG, JPG, WEBP</span>

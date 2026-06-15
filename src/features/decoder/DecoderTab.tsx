@@ -124,6 +124,13 @@ export const DecoderTab: React.FC = () => {
       {/* Upload Column */}
       <div className="lg:col-span-5 space-y-4">
         <h4 className="text-sm font-semibold tracking-wide uppercase text-neutral-400">Upload Image</h4>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
         <div
           onDragOver={handleDragOver}
           onDrop={handleDrop}
@@ -147,13 +154,6 @@ export const DecoderTab: React.FC = () => {
               </span>
             </>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
         </div>
 
         {error && (
