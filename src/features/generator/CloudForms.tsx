@@ -13,7 +13,7 @@ import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
-import { extractFileViaCanvas } from '../../utils/fileUtils';
+
 
 interface CloudFormProps {
   onChange: (link: string) => void;
@@ -206,19 +206,17 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     
     try {
-      // Use the ultra-robust Canvas extractor. 
-      // This completely bypasses the File System locks that iOS WebKit throws for iCloud photos.
-      const stableFileForUpload = await extractFileViaCanvas(rawFile);
-
       setUploadProgress('Uploading to Storage...');
       
       // 1. Upload to Supabase Storage Bucket
-      const fileExt = stableFileForUpload.name.split('.').pop() || 'jpg';
+      // Using the raw file directly leverages the browser's native HTTP streaming,
+      // avoiding all memory overhead and iOS Safari JS file system locks.
+      const fileExt = rawFile.name.split('.').pop() || 'jpg';
       const storagePath = `${shareId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadErr } = await supabase!.storage
         .from('shares')
-        .upload(storagePath, stableFileForUpload, {
+        .upload(storagePath, rawFile, {
           cacheControl: '3600',
           upsert: false
         });
