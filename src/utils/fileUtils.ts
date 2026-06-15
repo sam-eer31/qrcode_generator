@@ -8,8 +8,8 @@
  */
 export const readFileAsArrayBufferWithRetry = (
   file: File,
-  retries = 3,
-  delayMs = 300
+  retries = 10,
+  delayMs = 500
 ): Promise<ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     let attempt = 0;
@@ -57,8 +57,8 @@ export const readFileAsArrayBufferWithRetry = (
  */
 export const readFileAsDataURLWithRetry = (
   file: File,
-  retries = 3,
-  delayMs = 300
+  retries = 10,
+  delayMs = 500
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     let attempt = 0;

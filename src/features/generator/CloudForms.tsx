@@ -164,26 +164,16 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setUploadError('');
 
     try {
-      const arrayBuffer = await readFileAsArrayBufferWithRetry(file);
-
-      // Create a completely new memory-backed File object from the ArrayBuffer.
-      // This ensures the OS content resolver is no longer needed and resolves mobile access bugs.
-      const stableBlob = new Blob([arrayBuffer], { type: file.type });
-      const stableFile = new File([stableBlob], file.name, { type: file.type });
-
-      // Generate local preview using retry reader
-      const dataUrl = await readFileAsDataURLWithRetry(stableFile);
+      // Use createObjectURL for an instant, robust mobile preview without reading the file contents into memory yet.
+      const dataUrl = URL.createObjectURL(file);
       
       setSelectedFile({ name: file.name, size: file.size });
-      setRawFile(stableFile);
+      setRawFile(file);
       setFilePreview(dataUrl);
       setUploadError('');
     } catch (err: any) {
       console.error('File processing error:', err);
-      setUploadError(err.message || 'Failed to process image');
-      setSelectedFile(null);
-      setRawFile(null);
-      setFilePreview(null);
+      setUploadError('Failed to generate image preview.');
     } finally {
       setUploading(false);
       setUploadProgress('');
@@ -211,18 +201,26 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     if (!supabase || !rawFile || !selectedFile) return;
     setUploading(true);
     setUploadError('');
-    setUploadProgress('Uploading to Storage...');
+    setUploadProgress('Preparing file for upload...');
 
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     
     try {
-      // 1. Upload to Supabase Storage Bucket (Uncompressed to keep 100% quality)
-      const fileExt = rawFile.name.split('.').pop() || 'jpg';
+      // Create a stable file object right before uploading to bypass iOS mobile file locking bugs.
+      // By doing this here instead of on selection, we naturally wait for iCloud downloads to finish while the user configures the form.
+      const arrayBuffer = await readFileAsArrayBufferWithRetry(rawFile, 15, 500);
+      const stableBlob = new Blob([arrayBuffer], { type: rawFile.type });
+      const stableFileForUpload = new File([stableBlob], rawFile.name, { type: rawFile.type });
+
+      setUploadProgress('Uploading to Storage...');
+      
+      // 1. Upload to Supabase Storage Bucket
+      const fileExt = stableFileForUpload.name.split('.').pop() || 'jpg';
       const storagePath = `${shareId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadErr } = await supabase!.storage
         .from('shares')
-        .upload(storagePath, rawFile, {
+        .upload(storagePath, stableFileForUpload, {
           cacheControl: '3600',
           upsert: false
         });
