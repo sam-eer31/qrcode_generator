@@ -495,7 +495,7 @@ export default function App() {
         className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-16 space-y-4 md:space-y-8 min-h-[80vh] scroll-mt-20"
       >
         {/* Workspace header & dynamic title */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-neutral-200 dark:border-neutral-900 pb-5">
+        <div className="flex flex-col xl:flex-row justify-between xl:items-center gap-4 border-b border-neutral-200 dark:border-neutral-900 pb-5">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white capitalize">
               {activeTab === 'generate' ? 'QR Code Data Input' : `${activeTab} Workspace`}
@@ -506,7 +506,7 @@ export default function App() {
           </div>
           
           {/* Tabs bar */}
-          <div className="relative w-full sm:w-auto sm:max-w-[60%] lg:max-w-none min-w-0 -mx-4 sm:mx-0">
+          <div className="relative w-[calc(100%+2rem)] sm:w-full xl:w-fit xl:max-w-full min-w-0 -mx-4 sm:mx-0">
             {/* Left Fade Indicator */}
             {canScrollLeft && (
               <div className="absolute left-4 sm:left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-[#0E0E0E] to-transparent z-20 pointer-events-none rounded-l-2xl" />
@@ -519,7 +519,7 @@ export default function App() {
               onMouseLeave={() => setIsDraggingTabs(false)}
               onMouseUp={() => setIsDraggingTabs(false)}
               onMouseMove={handleTabMouseMove}
-              className={`flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-full sm:w-fit shadow-premium dark:shadow-premium-dark select-none px-4 sm:px-1.5 transition-all ${isDraggingTabs ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-full shadow-premium dark:shadow-premium-dark select-none px-4 sm:px-1.5 transition-all ${isDraggingTabs ? 'cursor-grabbing' : 'cursor-grab'}`}
             >
               {tabsList.map((t) => {
                 const Icon = t.icon;
