@@ -253,14 +253,14 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.content) }}
               />
             </div>
-            
-            <div className={`flex justify-between items-center mt-8 pt-4 border-t relative z-10 text-[10px] uppercase font-bold tracking-wider ${data.theme === 'light' ? 'border-neutral-200 text-neutral-400' : 'border-white/10 text-white/60'}`}>
-              <span className="flex items-center">
-                <FileIcon className="w-3.5 h-3.5 mr-1" />
-                Message Note
-              </span>
-              <span>QR Studio Cloud</span>
-            </div>
+          </div>
+
+          <div className="flex justify-between items-center px-1 text-[10px] uppercase font-bold tracking-wider text-neutral-400 dark:text-neutral-500 select-none">
+            <span className="flex items-center">
+              <FileIcon className="w-3.5 h-3.5 mr-1.5" />
+              Message Note
+            </span>
+            <span>QR Studio Cloud</span>
           </div>
 
           <Button
