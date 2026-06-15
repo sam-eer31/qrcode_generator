@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { doc, setDoc } from 'firebase/firestore';
+import imageCompression from 'browser-image-compression';
 import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
@@ -116,90 +117,22 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
   );
 };
 
-const compressImageBase64 = async (file: File, retries = 3): Promise<string> => {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      // Use modern, memory-efficient API if available (Chrome/Android)
-      if (typeof createImageBitmap !== 'undefined') {
-        const bitmap = await createImageBitmap(file);
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600;
-        const MAX_HEIGHT = 600;
-        let width = bitmap.width;
-        let height = bitmap.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas not supported');
-        
-        ctx.drawImage(bitmap, 0, 0, width, height);
-        bitmap.close(); // Free memory immediately
-        return canvas.toDataURL('image/jpeg', 0.6);
-      } else {
-        // Fallback for older Safari
-        return await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            if (!e.target?.result) return reject(new Error('Failed to read file'));
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 600;
-              const MAX_HEIGHT = 600;
-              let width = img.width;
-              let height = img.height;
-
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height *= MAX_WIDTH / width;
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width *= MAX_HEIGHT / height;
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.6));
-              } else {
-                reject(new Error('Canvas not supported'));
-              }
-            };
-            img.onerror = () => reject(new Error('Image decode failed'));
-            img.src = e.target.result as string;
-          };
-          reader.onerror = () => reject(new Error('FileReader failed'));
-          reader.readAsDataURL(file);
-        });
-      }
-    } catch (e: any) {
-      if (attempt === retries) {
-        throw new Error(`Failed to load image. If this is a cloud photo, ensure it's fully downloaded. (${e.message})`);
-      }
-      // Wait before retrying (gives Android OS / Google Photos time to finish writing to disk)
-      await new Promise(r => setTimeout(r, 800));
-    }
+const compressImageBase64 = async (file: File): Promise<string> => {
+  const options = {
+    maxSizeMB: 0.9,
+    maxWidthOrHeight: 600,
+    useWebWorker: true,
+    fileType: 'image/jpeg'
+  };
+  
+  try {
+    const compressedBlob = await imageCompression(file, options);
+    const base64Data = await imageCompression.getDataUrlFromFile(compressedBlob);
+    return base64Data;
+  } catch (err: any) {
+    console.error('Image compression error:', err);
+    throw new Error(err.message || 'Image compression failed');
   }
-  throw new Error('Failed to process image');
 };
 
 const MissingFirebaseConfig = () => (
@@ -237,26 +170,39 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
   if (!isFirebaseConfigured()) return <MissingFirebaseConfig />;
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.type === 'image/heic' || file.type === 'image/heif') {
-        setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG, or change your phone camera settings to "Most Compatible".');
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        setUploadError('Only image uploads are supported.');
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
-        return;
-      }
-      
+  const processFileImmediately = (file: File) => {
+    if (file.type === 'image/heic' || file.type === 'image/heif') {
+      setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG, or change your phone camera settings to "Most Compatible".');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Only image uploads are supported.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
+      return;
+    }
+
+    setUploadProgress('Reading file from device...');
+    setUploading(true);
+    setUploadError('');
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
       try {
+        const arrayBuffer = event.target?.result as ArrayBuffer;
+        if (!arrayBuffer) {
+          throw new Error('Failed to read file from your device.');
+        }
+
+        // Create a completely new memory-backed File object from the ArrayBuffer.
+        // This ensures the OS content resolver is no longer needed.
+        const stableBlob = new Blob([arrayBuffer], { type: file.type });
+        const stableFile = new File([stableBlob], file.name, { type: file.type });
+
         setUploadProgress('Compressing image...');
-        setUploading(true);
-        const base64Data = await compressImageBase64(file);
+        const base64Data = await compressImageBase64(stableFile);
         
         const approxSizeBytes = base64Data.length * 0.75;
         if (approxSizeBytes > 900000) {
@@ -268,6 +214,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         setFilePreview(base64Data);
         setUploadError('');
       } catch (err: any) {
+        console.error('File processing error:', err);
         setUploadError(err.message || 'Failed to process image');
         setSelectedFile(null);
         setCompressedData(null);
@@ -276,50 +223,34 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         setUploading(false);
         setUploadProgress('');
       }
+    };
+
+    reader.onerror = (err) => {
+      console.error('FileReader error:', err);
+      setUploadError('Failed to read the file from your device. Please try again.');
+      setSelectedFile(null);
+      setCompressedData(null);
+      setFilePreview(null);
+      setUploading(false);
+      setUploadProgress('');
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      processFileImmediately(file);
     }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'image/heic' || file.type === 'image/heif') {
-        setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG.');
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        setUploadError('Only image uploads are supported.');
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
-        return;
-      }
-      
-      try {
-        setUploadProgress('Compressing image...');
-        setUploading(true);
-        const base64Data = await compressImageBase64(file);
-        
-        const approxSizeBytes = base64Data.length * 0.75;
-        if (approxSizeBytes > 900000) {
-          throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
-        }
-
-        setSelectedFile({ name: file.name, size: file.size });
-        setCompressedData(base64Data);
-        setFilePreview(base64Data);
-        setUploadError('');
-      } catch (err: any) {
-        setUploadError(err.message || 'Failed to process image');
-        setSelectedFile(null);
-        setCompressedData(null);
-        setFilePreview(null);
-      } finally {
-        setUploading(false);
-        setUploadProgress('');
-      }
+      processFileImmediately(file);
     }
   };
 
@@ -394,7 +325,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${dragOver ? 'border-accent bg-accent/5' : 'border-neutral-200 dark:border-neutral-850 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white/20 dark:bg-black/20'}`}
           >
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/jpeg, image/png, image/webp, image/gif" className="hidden" />
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
             <div className="h-12 w-12 rounded-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 flex items-center justify-center mb-3"><CloudUpload className="w-5 h-5 text-accent" /></div>
             <span className="text-xs font-bold text-neutral-800 dark:text-white">Drag and drop your image here</span>
             <span className="text-[10px] font-medium text-neutral-450 mt-1">Supports PNG, JPG, WEBP</span>
