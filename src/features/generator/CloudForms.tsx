@@ -127,6 +127,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [uploadError, setUploadError] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -170,6 +171,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       setSelectedFile({ name: file.name, size: file.size });
       setRawFile(file);
       setFilePreview(dataUrl);
+      setPreviewError(false);
       setUploadError('');
     } catch (err: any) {
       console.error('File processing error:', err);
@@ -280,6 +282,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
           setSelectedFile(null);
           setRawFile(null);
           setFilePreview(null);
+          setPreviewError(false);
         }}
       />
     );
@@ -292,8 +295,21 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
         {filePreview ? (
           <div className="relative rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-[16/9] flex items-center justify-center">
-            <img src={filePreview} alt="Preview" className="max-h-full max-w-full object-contain" />
-            <button onClick={() => { setSelectedFile(null); setRawFile(null); setFilePreview(null); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold">Clear</button>
+            {previewError ? (
+              <div className="flex flex-col items-center justify-center text-center p-6 text-neutral-500">
+                <Check className="w-8 h-8 text-success mb-2" />
+                <span className="text-xs font-bold text-neutral-800 dark:text-white max-w-[200px] truncate">{selectedFile?.name}</span>
+                <span className="text-[10px] mt-1">Ready for upload</span>
+              </div>
+            ) : (
+              <img 
+                src={filePreview} 
+                alt="Preview" 
+                className="max-h-full max-w-full object-contain" 
+                onError={() => setPreviewError(true)}
+              />
+            )}
+            <button onClick={() => { setSelectedFile(null); setRawFile(null); setFilePreview(null); setPreviewError(false); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold z-10">Clear</button>
           </div>
         ) : (
           <div
