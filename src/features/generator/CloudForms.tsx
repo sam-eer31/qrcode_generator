@@ -116,59 +116,90 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
   );
 };
 
-const compressImageBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.src = objectUrl;
-    
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 600;
-      const MAX_HEIGHT = 600;
-      let width = img.width;
-      let height = img.height;
+const compressImageBase64 = async (file: File, retries = 3): Promise<string> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      // Use modern, memory-efficient API if available (Chrome/Android)
+      if (typeof createImageBitmap !== 'undefined') {
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const MAX_HEIGHT = 600;
+        let width = bitmap.width;
+        let height = bitmap.height;
 
-      // Maintain aspect ratio
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
         }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-      }
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Draw image to canvas
-        ctx.drawImage(img, 0, 0, width, height);
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas not supported');
         
-        try {
-          // Export as JPEG with 0.6 quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-          URL.revokeObjectURL(objectUrl);
-          resolve(dataUrl);
-        } catch (e) {
-          URL.revokeObjectURL(objectUrl);
-          reject(new Error('Failed to compress image data.'));
-        }
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close(); // Free memory immediately
+        return canvas.toDataURL('image/jpeg', 0.6);
       } else {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Browser does not support canvas context.'));
+        // Fallback for older Safari
+        return await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (!e.target?.result) return reject(new Error('Failed to read file'));
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 600;
+              const MAX_HEIGHT = 600;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
+              } else {
+                reject(new Error('Canvas not supported'));
+              }
+            };
+            img.onerror = () => reject(new Error('Image decode failed'));
+            img.src = e.target.result as string;
+          };
+          reader.onerror = () => reject(new Error('FileReader failed'));
+          reader.readAsDataURL(file);
+        });
       }
-    };
-    
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Browser rejected the image format. Please ensure it is a valid JPG/PNG.'));
-    };
-  });
+    } catch (e: any) {
+      if (attempt === retries) {
+        throw new Error(`Failed to load image. If this is a cloud photo, ensure it's fully downloaded. (${e.message})`);
+      }
+      // Wait before retrying (gives Android OS / Google Photos time to finish writing to disk)
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  throw new Error('Failed to process image');
 };
 
 const MissingFirebaseConfig = () => (
