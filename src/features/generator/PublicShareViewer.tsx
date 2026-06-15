@@ -12,8 +12,7 @@ import {
   Calendar,
   FileText as FileIcon
 } from 'lucide-react';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../../utils/firebase';
+import { supabase, isSupabaseConfigured } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import DOMPurify from 'dompurify';
 
@@ -88,40 +87,57 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    if (!isFirebaseConfigured() || !db) {
+    if (!isSupabaseConfigured() || !supabase) {
       setError('not_configured');
       setLoading(false);
       return;
     }
 
     const fetchShareData = async () => {
+      const client = supabase;
+      if (!client) return;
       try {
-        const docRef = doc(db!, 'shares', shareId);
-        const docSnap = await getDoc(docRef);
+        const { data: shareItem, error: fetchError } = await (client
+          .from('shares') as any)
+          .select('*')
+          .eq('id', shareId)
+          .single();
 
-        if (!docSnap.exists()) {
+        if (fetchError || !shareItem) {
           setError('not_found');
           setLoading(false);
           return;
         }
 
-        const shareItem = docSnap.data() as ShareData;
-        
         // Expiry check
-        if (shareItem.expiresAt && Date.now() > shareItem.expiresAt) {
+        if (shareItem.expires_at && Date.now() > shareItem.expires_at) {
           setError('expired');
           setLoading(false);
           return;
         }
 
-        setData(shareItem);
+        const mappedData: ShareData = {
+          id: shareItem.id,
+          type: shareItem.type,
+          content: shareItem.content,
+          theme: shareItem.theme || undefined,
+          bgPattern: shareItem.bg_pattern || undefined,
+          creatorId: shareItem.creator_id,
+          createdAt: shareItem.created_at,
+          expiresAt: shareItem.expires_at,
+          scanCount: shareItem.scan_count || 0,
+          fileName: shareItem.file_name || undefined
+        };
+
+        setData(mappedData);
         setLoading(false);
 
         // Increment scan count once per load in background
         try {
-          await updateDoc(docRef, {
-            scanCount: increment(1)
-          });
+          await (client
+            .from('shares') as any)
+            .update({ scan_count: (shareItem.scan_count || 0) + 1 })
+            .eq('id', shareId);
         } catch (err) {
           console.warn('Could not increment scan count:', err);
         }
@@ -250,7 +266,7 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
           <Button
             onClick={handleCopyText}
             variant="secondary"
-            className="w-full py-3 flex items-center justify-center space-x-2 text-xs shadow-md border-neutral-250 dark:border-neutral-850"
+            className="w-full py-3 flex items-center justify-center space-x-2 text-xs shadow-md border-neutral-255 dark:border-neutral-850"
           >
             {copied ? (
               <>
@@ -339,7 +355,7 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
                 {error === 'generic' && 'Unable to Load Link'}
               </h2>
               <p className="text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
-                {error === 'not_configured' && 'This QR Toolkit instance needs Firebase setup in the application settings menu to access cloud resources.'}
+                {error === 'not_configured' && 'This QR Toolkit instance needs Supabase setup in the application settings menu to access cloud resources.'}
                 {error === 'expired' && 'Guest files automatically expire and self-destruct 24 hours after upload. Register for a free account to get permanent links.'}
                 {error === 'not_found' && 'The requested share link does not exist or was deleted by the creator.'}
                 {error === 'generic' && 'A network error occurred while accessing the database. Please check your connection.'}
@@ -382,7 +398,7 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
         {/* Footer Brand CTA */}
         <div className="border-t border-neutral-200 dark:border-neutral-900 pt-5 text-center">
           <p className="text-[10px] text-neutral-400 select-none">
-            Hosted securely on QR Studio Cloud. Build and customize gorgeous branded QR codes for free.
+            Hosted securely on QR Studio Cloud. Build and customize branded QR codes for free.
           </p>
         </div>
       </div>

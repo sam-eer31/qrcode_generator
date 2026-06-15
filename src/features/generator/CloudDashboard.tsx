@@ -14,15 +14,14 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
-import { db, auth } from '../../utils/firebase';
+import { supabase } from '../../utils/supabase';
 
 interface ShareData {
   id: string;
   type: 'image' | 'text';
   content: string;
   theme?: string;
+  bgPattern?: 'plain' | 'dots' | 'lines';
   creatorId: string;
   createdAt: number;
   expiresAt: number | null;
@@ -48,28 +47,35 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
     }
   };
 
-  const fetchUserItems = async (user: any) => {
-    if (!db || !user) {
+  const fetchUserItems = async (userId: string) => {
+    const client = supabase;
+    if (!client || !userId) {
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      // Fetch shares without composite indexes (sorting client-side to prevent firestore index errors)
-      const q = query(
-        collection(db, 'shares'), 
-        where('creatorId', '==', user.uid)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const fetchedItems: ShareData[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedItems.push(doc.data() as ShareData);
-      });
+      const { data, error } = await (client.from('shares') as any)
+        .select('*')
+        .eq('creator_id', userId)
+        .order('created_at', { ascending: false });
 
-      // Client-side sort: descending by createdAt
-      fetchedItems.sort((a, b) => b.createdAt - a.createdAt);
+      if (error) throw error;
+
+      const fetchedItems: ShareData[] = (data || []).map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        content: item.content,
+        theme: item.theme || undefined,
+        bgPattern: item.bg_pattern || undefined,
+        creatorId: item.creator_id,
+        createdAt: item.created_at,
+        expiresAt: item.expires_at,
+        scanCount: item.scan_count || 0,
+        fileName: item.file_name || undefined
+      }));
+
       setItems(fetchedItems);
     } catch (err) {
       console.error('Error fetching user shared links:', err);
@@ -79,16 +85,29 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   };
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth!, (user) => {
-      if (user) {
-        fetchUserItems(user);
+    if (!supabase) return;
+    
+    // Initial fetch
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchUserItems(session.user.id);
       } else {
         setItems([]);
         setLoading(false);
       }
     });
-    return () => unsubscribe();
+
+    // Listen to changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUserItems(session.user.id);
+      } else {
+        setItems([]);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleCopyLink = (itemId: string) => {
@@ -99,7 +118,8 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   };
 
   const handleDeleteItem = async (item: ShareData) => {
-    if (!db) return;
+    const client = supabase;
+    if (!client) return;
     
     const confirmDelete = window.confirm('Are you sure you want to delete this shared link permanently? This cannot be undone.');
     if (!confirmDelete) return;
@@ -107,11 +127,28 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
     setDeletingId(item.id);
 
     try {
-      // 1. Delete document from Firestore
-      await deleteDoc(doc(db, 'shares', item.id));
+      // 1. If it's an image, delete it from the Supabase Storage Bucket
+      if (item.type === 'image') {
+        const sharesMarker = '/shares/';
+        const markerIndex = item.content.indexOf(sharesMarker);
+        if (markerIndex !== -1) {
+          const storagePath = decodeURIComponent(item.content.substring(markerIndex + sharesMarker.length));
+          await client.storage.from('shares').remove([storagePath]);
+        }
+      }
 
-      // 2. Remove from local state
+      // 2. Delete document from Database Table
+      const { error: dbError } = await (client.from('shares') as any)
+        .delete()
+        .eq('id', item.id);
+
+      if (dbError) throw dbError;
+
+      // 3. Remove from local state
       setItems(prev => prev.filter(i => i.id !== item.id));
+      if (selectedItem?.id === item.id) {
+        setSelectedItem(null);
+      }
     } catch (err) {
       console.error('Error deleting shared link:', err);
       alert('Failed to delete item. Please try again.');
@@ -283,7 +320,6 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
           onBack={() => setSelectedItem(null)}
           onDelete={(item) => {
             handleDeleteItem(item);
-            if (deletingId !== item.id) setSelectedItem(null); // only close if delete initiated successfully
           }}
           deletingId={deletingId}
           getExpiryLabel={getExpiryLabel}

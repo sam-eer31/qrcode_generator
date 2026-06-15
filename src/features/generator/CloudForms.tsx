@@ -10,13 +10,11 @@ import {
   CloudUpload
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { doc, setDoc } from 'firebase/firestore';
-import imageCompression from 'browser-image-compression';
-import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
+import { supabase, isSupabaseConfigured } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
-import { readFileAsArrayBufferWithRetry } from '../../utils/fileUtils';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
+import { readFileAsArrayBufferWithRetry, readFileAsDataURLWithRetry } from '../../utils/fileUtils';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
@@ -118,31 +116,7 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
   );
 };
 
-const compressImageBase64 = async (file: File): Promise<string> => {
-  const options = {
-    maxSizeMB: 0.9,
-    maxWidthOrHeight: 600,
-    useWebWorker: true,
-    fileType: 'image/jpeg'
-  };
-  
-  try {
-    const compressedBlob = await imageCompression(file, options);
-    return await imageCompression.getDataUrlFromFile(compressedBlob);
-  } catch (err: any) {
-    console.warn('Image compression with web worker failed. Retrying on main thread...', err);
-    try {
-      const fallbackOptions = { ...options, useWebWorker: false };
-      const compressedBlob = await imageCompression(file, fallbackOptions);
-      return await imageCompression.getDataUrlFromFile(compressedBlob);
-    } catch (fallbackErr: any) {
-      console.error('Image compression failed completely:', fallbackErr);
-      throw new Error(fallbackErr.message || 'Browser rejected the image. Please try a different image.');
-    }
-  }
-};
-
-const MissingFirebaseConfig = () => (
+const MissingSupabaseConfig = () => (
   <div className="space-y-6 text-center py-10 border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-neutral-50 dark:bg-[#0E0E0E]">
     <div className="h-16 w-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500">
       <Settings className="w-8 h-8 animate-spin-slow" />
@@ -150,7 +124,7 @@ const MissingFirebaseConfig = () => (
     <div className="space-y-2">
       <h2 className="text-base font-bold text-neutral-900 dark:text-white">Cloud Integration Required</h2>
       <p className="text-xs text-neutral-450 dark:text-neutral-500 max-w-sm mx-auto leading-relaxed px-4">
-        Firebase storage is required to host cloud data. Click the Settings icon in the header and paste your Firebase Web credentials.
+        Supabase storage and database are required to host cloud data. Click the Settings icon in the header and paste your Supabase credentials.
       </p>
     </div>
   </div>
@@ -158,7 +132,7 @@ const MissingFirebaseConfig = () => (
 
 export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
-  const [compressedData, setCompressedData] = useState<string | null>(null);
+  const [rawFile, setRawFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
   const [uploading, setUploading] = useState(false);
@@ -167,15 +141,22 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const currentUser = auth?.currentUser;
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentUser) setExpiryDays('infinite');
-    else setExpiryDays('1');
-  }, [currentUser]);
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUserId(session?.user?.id || null);
+        if (session?.user) {
+          setExpiryDays('infinite');
+        } else {
+          setExpiryDays('1');
+        }
+      });
+    }
+  }, []);
 
-  if (!isFirebaseConfigured()) return <MissingFirebaseConfig />;
+  if (!isSupabaseConfigured()) return <MissingSupabaseConfig />;
 
   const processFileImmediately = async (file: File) => {
     if (file.type === 'image/heic' || file.type === 'image/heif') {
@@ -199,27 +180,22 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       const arrayBuffer = await readFileAsArrayBufferWithRetry(file);
 
       // Create a completely new memory-backed File object from the ArrayBuffer.
-      // This ensures the OS content resolver is no longer needed.
+      // This ensures the OS content resolver is no longer needed and resolves mobile access bugs.
       const stableBlob = new Blob([arrayBuffer], { type: file.type });
       const stableFile = new File([stableBlob], file.name, { type: file.type });
 
-      setUploadProgress('Compressing image...');
-      const base64Data = await compressImageBase64(stableFile);
+      // Generate local preview using retry reader
+      const dataUrl = await readFileAsDataURLWithRetry(stableFile);
       
-      const approxSizeBytes = base64Data.length * 0.75;
-      if (approxSizeBytes > 900000) {
-        throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
-      }
-
       setSelectedFile({ name: file.name, size: file.size });
-      setCompressedData(base64Data);
-      setFilePreview(base64Data);
+      setRawFile(stableFile);
+      setFilePreview(dataUrl);
       setUploadError('');
     } catch (err: any) {
       console.error('File processing error:', err);
       setUploadError(err.message || 'Failed to process image');
       setSelectedFile(null);
-      setCompressedData(null);
+      setRawFile(null);
       setFilePreview(null);
     } finally {
       setUploading(false);
@@ -245,30 +221,60 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   };
 
   const handleUpload = async () => {
-    if (!db || !compressedData || !selectedFile) return;
+    if (!supabase || !rawFile || !selectedFile) return;
     setUploading(true);
     setUploadError('');
-    setUploadProgress('Uploading to Cloud...');
+    setUploadProgress('Uploading to Storage...');
 
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    
     try {
+      // 1. Upload to Supabase Storage Bucket (Uncompressed to keep 100% quality)
+      const fileExt = rawFile.name.split('.').pop() || 'jpg';
+      const storagePath = `${shareId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadErr } = await supabase!.storage
+        .from('shares')
+        .upload(storagePath, rawFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
+      if (uploadErr) {
+        throw new Error(uploadErr.message || 'Storage upload failed.');
+      }
+
+      setUploadProgress('Saving metadata...');
+
+      // 2. Get Public URL
+      const { data: { publicUrl } } = supabase!.storage
+        .from('shares')
+        .getPublicUrl(storagePath);
+
+      // 3. Save metadata record to Database
       let expiresAt: number | null = null;
       if (expiryDays === '1') expiresAt = Date.now() + 24 * 60 * 60 * 1000;
       else if (expiryDays === '7') expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
       else if (expiryDays === '30') expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
 
-      await setDoc(doc(db, 'shares', shareId), {
-        id: shareId,
-        type: 'image',
-        content: compressedData,
-        theme: null,
-        creatorId: currentUser ? currentUser.uid : 'anonymous',
-        createdAt: Date.now(),
-        expiresAt,
-        scanCount: 0,
-        fileName: selectedFile.name
-      });
+      const { error: dbError } = await (supabase!.from('shares') as any)
+        .insert({
+          id: shareId,
+          type: 'image',
+          content: publicUrl,
+          theme: null,
+          creator_id: userId || 'anonymous',
+          created_at: Date.now(),
+          expires_at: expiresAt,
+          scan_count: 0,
+          file_name: selectedFile.name
+        });
+
+      if (dbError) {
+        // Attempt to clean up uploaded file on database failure
+        await supabase!.storage.from('shares').remove([storagePath]);
+        throw new Error(dbError.message || 'Database insert failed.');
+      }
 
       const publicLink = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
       setGeneratedLink(publicLink);
@@ -291,7 +297,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         onReset={() => {
           setGeneratedLink('');
           setSelectedFile(null);
-          setCompressedData(null);
+          setRawFile(null);
           setFilePreview(null);
         }}
       />
@@ -306,7 +312,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         {filePreview ? (
           <div className="relative rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-[16/9] flex items-center justify-center">
             <img src={filePreview} alt="Preview" className="max-h-full max-w-full object-contain" />
-            <button onClick={() => { setSelectedFile(null); setCompressedData(null); setFilePreview(null); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold">Clear</button>
+            <button onClick={() => { setSelectedFile(null); setRawFile(null); setFilePreview(null); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold">Clear</button>
           </div>
         ) : (
           <div
@@ -326,11 +332,11 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       <div className="space-y-2">
         <Label>Link Expiry</Label>
         <div className="flex items-center space-x-2">
-          <select value={expiryDays} onChange={(e) => setExpiryDays(e.target.value as any)} disabled={!currentUser} className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 text-neutral-900 dark:text-white">
+          <select value={expiryDays} onChange={(e) => setExpiryDays(e.target.value as any)} disabled={!userId} className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 text-neutral-900 dark:text-white">
             <option value="1">24 Hours (Guest limit)</option>
-            {currentUser && <><option value="7">7 Days</option><option value="30">30 Days</option><option value="infinite">Permanent Link</option></>}
+            {userId && <><option value="7">7 Days</option><option value="30">30 Days</option><option value="infinite">Permanent Link</option></>}
           </select>
-          {!currentUser && (
+          {!userId && (
             <div className="flex items-center space-x-1 flex-shrink-0 bg-neutral-100 dark:bg-neutral-900/60 p-2 rounded-xl text-[9px] font-bold text-neutral-400 border border-neutral-200/50 dark:border-neutral-850/50">
               <Lock className="w-3.5 h-3.5 text-amber-500 fill-current" /><span>Sign in for permanent</span>
             </div>
@@ -338,7 +344,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         </div>
       </div>
 
-      <Button onClick={handleUpload} disabled={uploading || !selectedFile} className="w-full py-3.5 flex items-center justify-center space-x-2 shadow-lg">
+      <Button onClick={handleUpload} disabled={uploading || !rawFile} className="w-full py-3.5 flex items-center justify-center space-x-2 shadow-lg">
         {uploading ? <span>{uploadProgress}</span> : <><CloudUpload className="w-4 h-4" /><span>Generate Image Cloud Link</span></>}
       </Button>
 
@@ -358,17 +364,25 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [uploadError, setUploadError] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
 
-  const currentUser = auth?.currentUser;
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentUser) setExpiryDays('infinite');
-    else setExpiryDays('1');
-  }, [currentUser]);
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUserId(session?.user?.id || null);
+        if (session?.user) {
+          setExpiryDays('infinite');
+        } else {
+          setExpiryDays('1');
+        }
+      });
+    }
+  }, []);
 
-  if (!isFirebaseConfigured()) return <MissingFirebaseConfig />;
+  if (!isSupabaseConfigured()) return <MissingSupabaseConfig />;
 
   const handleUpload = async () => {
-    if (!db || !messageText.trim()) return;
+    if (!supabase || !messageText.trim()) return;
     setUploading(true);
     setUploadError('');
 
@@ -379,17 +393,22 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
       else if (expiryDays === '7') expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
       else if (expiryDays === '30') expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
 
-      await setDoc(doc(db, 'shares', shareId), {
-        id: shareId,
-        type: 'text',
-        content: messageText,
-        theme: selectedTheme,
-        bgPattern: selectedPattern,
-        creatorId: currentUser ? currentUser.uid : 'anonymous',
-        createdAt: Date.now(),
-        expiresAt,
-        scanCount: 0
-      });
+      const { error: dbError } = await (supabase!.from('shares') as any)
+        .insert({
+          id: shareId,
+          type: 'text',
+          content: messageText,
+          theme: selectedTheme,
+          bg_pattern: selectedPattern,
+          creator_id: userId || 'anonymous',
+          created_at: Date.now(),
+          expires_at: expiresAt,
+          scan_count: 0
+        });
+
+      if (dbError) {
+        throw new Error(dbError.message || 'Database insert failed.');
+      }
 
       const publicLink = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
       setGeneratedLink(publicLink);
@@ -471,11 +490,11 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
       <div className="space-y-2">
         <Label>Link Expiry</Label>
         <div className="flex items-center space-x-2">
-          <select value={expiryDays} onChange={(e) => setExpiryDays(e.target.value as any)} disabled={!currentUser} className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 text-neutral-900 dark:text-white">
+          <select value={expiryDays} onChange={(e) => setExpiryDays(e.target.value as any)} disabled={!userId} className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 text-neutral-900 dark:text-white">
             <option value="1">24 Hours (Guest limit)</option>
-            {currentUser && <><option value="7">7 Days</option><option value="30">30 Days</option><option value="infinite">Permanent Link</option></>}
+            {userId && <><option value="7">7 Days</option><option value="30">30 Days</option><option value="infinite">Permanent Link</option></>}
           </select>
-          {!currentUser && (
+          {!userId && (
             <div className="flex items-center space-x-1 flex-shrink-0 bg-neutral-100 dark:bg-neutral-900/60 p-2 rounded-xl text-[9px] font-bold text-neutral-400 border border-neutral-200/50 dark:border-neutral-850/50">
               <Lock className="w-3.5 h-3.5 text-amber-500 fill-current" /><span>Sign in for permanent</span>
             </div>
