@@ -14,8 +14,10 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick, command
   const mouseY = useMotionValue(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isHoverable, setIsHoverable] = useState(true);
+  const [isMac, setIsMac] = useState(false);
 
   useEffect(() => {
+    setIsMac(navigator.userAgent.includes('Mac'));
     // Detect if device supports hover (mouse vs touch)
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
     setIsHoverable(mq.matches);
@@ -134,7 +136,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick, command
             {commandPaletteEnabled && (
               <>
                 <span>•</span>
-                <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">⌘ K</kbd> for commands</span>
+                <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">{isMac ? 'Cmd K' : 'Ctrl K'}</kbd> for commands</span>
               </>
             )}
           </motion.div>

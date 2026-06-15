@@ -112,6 +112,7 @@ export default function App() {
   const batchCanvasRef2 = useRef<HTMLCanvasElement>(null);
   const batchCanvasRef3 = useRef<HTMLCanvasElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const [isMac, setIsMac] = useState(false);
 
   // Stable text changer callback to prevent infinite re-render loops in forms
   const handleTextChange = useCallback((textValue: string) => {
@@ -143,6 +144,7 @@ export default function App() {
 
   // Check URL parameters for shared content on initial mount
   useEffect(() => {
+    setIsMac(navigator.userAgent.includes('Mac'));
     const urlParams = new URLSearchParams(window.location.search);
     const share = urlParams.get('share');
     if (share) {
@@ -328,7 +330,7 @@ export default function App() {
             >
               <span>Search commands...</span>
               <kbd className="px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono text-[9px]">
-                ⌘K
+                {isMac ? 'Cmd+K' : 'Ctrl+K'}
               </kbd>
             </button>
           )}
