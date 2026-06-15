@@ -148,7 +148,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   className = '',
   placeholder = 'Start typing...',
   textColorClass = 'text-white',
-  textureClass = 'opacity-10 mix-blend-overlay',
+  textureClass = 'opacity-20',
   bgPattern = 'dots'
 }) => {
   const editor = useEditor({
@@ -166,7 +166,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     content: value,
     editorProps: {
       attributes: {
-        class: 'focus:outline-none min-h-[200px] p-6',
+        class: 'focus:outline-none min-h-[250px] p-6 flex-1',
         placeholder: placeholder
       },
     },
@@ -182,12 +182,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [value, editor]);
 
   return (
-    <div className={`relative flex flex-col w-full rounded-2xl overflow-hidden transition-all duration-500 shadow-inner ${className} ${textColorClass}`}>
+    <div 
+      className={`relative flex flex-col w-full rounded-2xl overflow-hidden transition-all duration-500 shadow-inner ${className} ${textColorClass}`}
+      style={{ minHeight: '300px' }}
+    >
       <MenuBar editor={editor} textColorClass={textColorClass} />
       
-      <div className="relative flex-1">
-        <div className={`relative z-10 w-full h-full overflow-y-auto max-h-[400px] tiptap-editor-wrapper ${bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
-          <div className="relative min-h-full tiptap-editor">
+      <div className="relative flex-1 min-h-0">
+        <div className={`absolute inset-0 overflow-y-auto tiptap-editor-wrapper ${bgPattern === 'lines' ? 'pattern-lines-active' : ''}`}>
+          <div className="relative flex flex-col min-h-full tiptap-editor">
             {/* Dynamic Pattern Overlay - Now scrolls with content */}
             {bgPattern === 'dots' && (
               <div className={`absolute inset-0 pattern-dots pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
@@ -196,8 +199,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               <div className={`absolute inset-0 pattern-lines pointer-events-none z-0 transition-opacity duration-300 ${textureClass}`} />
             )}
             
-            <div className="relative z-10">
-              <EditorContent editor={editor} />
+            <div className="relative z-10 flex-1 flex flex-col">
+              <EditorContent editor={editor} className="flex-1 flex flex-col" />
             </div>
           </div>
         </div>

@@ -148,30 +148,33 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
           </div>
           <div>
             <Label htmlFor="bg-color">Background Color</Label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 w-full">
               <input
                 id="bg-color"
                 type="color"
                 value={options.backgroundColor === 'transparent' ? '#FFFFFF' : options.backgroundColor}
                 onChange={(e) => updateOption('backgroundColor', e.target.value)}
-                className="h-8 w-8 rounded cursor-pointer border-none"
+                className="h-9 w-9 rounded-xl cursor-pointer border border-neutral-200 dark:border-neutral-800 flex-shrink-0"
                 disabled={options.backgroundColor === 'transparent'}
               />
-              <Select
-                aria-label="Background Transparency Toggle"
-                value={options.backgroundColor === 'transparent' ? 'transparent' : 'opaque'}
-                onChange={(e) => {
-                  if (e.target.value === 'transparent') {
-                    updateOption('backgroundColor', 'transparent');
-                  } else {
-                    updateOption('backgroundColor', '#FFFFFF');
-                  }
-                }}
-                options={[
-                  { value: 'opaque', label: 'Opaque Background' },
-                  { value: 'transparent', label: 'Transparent' },
-                ]}
-              />
+              <div className="flex-1 min-w-0">
+                <Select
+                  aria-label="Background Transparency Toggle"
+                  value={options.backgroundColor === 'transparent' ? 'transparent' : 'opaque'}
+                  onChange={(e) => {
+                    if (e.target.value === 'transparent') {
+                      updateOption('backgroundColor', 'transparent');
+                    } else {
+                      updateOption('backgroundColor', '#FFFFFF');
+                    }
+                  }}
+                  options={[
+                    { value: 'opaque', label: 'Opaque Background' },
+                    { value: 'transparent', label: 'Transparent' },
+                  ]}
+                  className="w-full"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -299,12 +302,12 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
               
               <div className="pt-2">
                 <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 block">Or choose a popular brand:</span>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-5 gap-2 w-full sm:flex sm:flex-wrap">
                   {FAMOUS_LOGOS.map((logo) => (
                     <button
                       key={logo.name}
                       onClick={() => updateOption('logoUrl', logo.url)}
-                      className="p-2 border border-neutral-200 bg-white rounded-xl hover:border-accent hover:shadow-md transition-all group focus:outline-none shadow-sm"
+                      className="flex items-center justify-center aspect-square w-full p-2 border border-neutral-200 bg-white rounded-xl hover:border-accent hover:shadow-md transition-all group focus:outline-none shadow-sm"
                       title={`Add ${logo.name} logo`}
                     >
                       <img src={logo.url} alt={logo.name} className="h-5 w-5 object-contain group-hover:scale-110 transition-transform" />
@@ -397,12 +400,12 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
 
         <div>
           <Label>QR Code Angle Rotation</Label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {[0, 90, 180, 270].map((deg) => (
               <button
                 key={deg}
                 onClick={() => updateOption('rotation', deg)}
-                className={`flex items-center justify-center space-x-1.5 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                className={`flex items-center justify-center space-x-1 sm:space-x-1.5 py-2 px-1 text-[10px] sm:text-xs font-semibold rounded-xl border transition-all ${
                   options.rotation === deg
                     ? 'border-accent text-accent bg-accent/5 dark:bg-accent/10'
                     : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'

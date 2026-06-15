@@ -108,12 +108,12 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-wrap justify-center lg:justify-start gap-4"
+            className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 w-full sm:w-auto px-4 sm:px-0"
           >
-            <Button onClick={onCreateClick} variant="accent" size="lg" className="shadow-lg shadow-accent/20">
+            <Button onClick={onCreateClick} variant="accent" size="lg" className="shadow-lg shadow-accent/20 w-full sm:w-auto">
               Create QR
             </Button>
-            <Button onClick={onUploadClick} variant="secondary" size="lg">
+            <Button onClick={onUploadClick} variant="secondary" size="lg" className="w-full sm:w-auto">
               Upload QR
             </Button>
           </motion.div>

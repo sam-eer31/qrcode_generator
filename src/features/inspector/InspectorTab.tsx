@@ -113,11 +113,11 @@ export const InspectorTab: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className="relative flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-3xl p-8 bg-white/50 dark:bg-[#0C0C0C]/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all cursor-pointer min-h-[260px]"
+          className="relative flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-3xl p-6 sm:p-8 bg-white/50 dark:bg-[#0C0C0C]/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all cursor-pointer min-h-[200px] sm:min-h-[260px]"
         >
           {imageSrc ? (
-            <div className="relative w-full max-h-[220px] flex items-center justify-center overflow-hidden rounded-xl">
-              <img src={imageSrc} alt="Inspection Source" className="max-h-[200px] object-contain rounded" />
+            <div className="relative w-full max-h-[180px] sm:max-h-[220px] flex items-center justify-center overflow-hidden rounded-xl">
+              <img src={imageSrc} alt="Inspection Source" className="max-h-[160px] sm:max-h-[200px] object-contain rounded" />
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                 <span className="text-xs font-semibold text-white bg-black/60 px-3 py-1.5 rounded-full">Replace QR image</span>
               </div>
@@ -254,21 +254,21 @@ export const InspectorTab: React.FC = () => {
             {/* Print & Distance Recommendations */}
             <div className="space-y-2">
               <span className="text-xs font-semibold tracking-wide uppercase text-neutral-400 font-sans">Print & Scan Recommendations</span>
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
-                <table className="w-full text-left border-collapse">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse min-w-[480px]">
                   <thead>
                     <tr className="border-b border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
-                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Print Size (W × H)</th>
-                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Recommended Scan Distance</th>
-                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Target Use Cases</th>
+                      <th className="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Print Size (W × H)</th>
+                      <th className="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Recommended Scan Distance</th>
+                      <th className="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Target Use Cases</th>
                     </tr>
                   </thead>
                   <tbody>
                     {getPrintRecommendations(qrObject.version).map((row, index) => (
                       <tr key={index} className="border-b border-neutral-200 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors text-xs font-medium text-neutral-800 dark:text-neutral-200">
-                        <td className="px-5 py-3.5 font-mono">{row.printSize}</td>
-                        <td className="px-5 py-3.5 font-mono">{row.distance}</td>
-                        <td className="px-5 py-3.5 text-neutral-500 dark:text-neutral-450">{row.useCase}</td>
+                        <td className="px-3 sm:px-5 py-3.5 font-mono">{row.printSize}</td>
+                        <td className="px-3 sm:px-5 py-3.5 font-mono">{row.distance}</td>
+                        <td className="px-3 sm:px-5 py-3.5 text-neutral-500 dark:text-neutral-450">{row.useCase}</td>
                       </tr>
                     ))}
                   </tbody>

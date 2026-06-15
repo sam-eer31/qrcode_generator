@@ -433,7 +433,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
   }
 
   const NOTE_THEMES = [
-    { id: 'light', name: 'Clean White', bg: 'bg-white border border-neutral-200 dark:border-neutral-800', text: 'text-neutral-900 placeholder:text-neutral-400', texture: 'invert opacity-[0.05]' },
+    { id: 'light', name: 'Clean White', bg: 'bg-white border border-neutral-200 dark:border-neutral-800', text: 'text-neutral-900 placeholder:text-neutral-400', texture: 'opacity-10' },
     { id: 'ocean', name: 'Ocean Blue', bg: 'bg-gradient-to-br from-blue-500 to-cyan-500', text: 'text-white placeholder:text-white/60' },
     { id: 'sunset', name: 'Sunset Glow', bg: 'bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500', text: 'text-white placeholder:text-white/60' },
     { id: 'forest', name: 'Emerald', bg: 'bg-gradient-to-br from-emerald-500 to-teal-600', text: 'text-white placeholder:text-white/60' },

@@ -316,7 +316,7 @@ export default function App() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button
             onClick={() => setIsPaletteOpen(true)}
             className="hidden sm:flex items-center space-x-3 px-3 py-1.5 rounded-full border border-neutral-200/50 dark:border-neutral-850 bg-white/40 dark:bg-black/40 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors shadow-premium dark:shadow-premium-dark focus:outline-none"
@@ -354,7 +354,7 @@ export default function App() {
       {/* 3. Main Workspace Container */}
       <main
         ref={workspaceRef}
-        className="max-w-7xl mx-auto px-4 md:px-8 py-16 space-y-8 min-h-[80vh] scroll-mt-20"
+        className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-16 space-y-4 md:space-y-8 min-h-[80vh] scroll-mt-20"
       >
         {/* Workspace header & dynamic title */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-neutral-200 dark:border-neutral-900 pb-5">
@@ -368,7 +368,7 @@ export default function App() {
           </div>
           
           {/* Tabs bar */}
-          <div className="flex flex-wrap gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-fit shadow-premium dark:shadow-premium-dark select-none">
+          <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-full sm:w-fit shadow-premium dark:shadow-premium-dark select-none -mx-4 px-4 sm:mx-0 sm:px-1.5">
             {tabsList.map((t) => {
               const Icon = t.icon;
               const isActive = activeTab === t.id;
@@ -376,7 +376,7 @@ export default function App() {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`relative flex items-center space-x-1.5 px-4.5 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
+                  className={`relative flex-shrink-0 flex items-center space-x-1.5 px-4.5 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
                     isActive
                       ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
                       : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-350'
@@ -391,13 +391,14 @@ export default function App() {
         </div>
 
         {/* 4. Split Layout Panes */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
           
           {/* Left Feature Panel Column */}
           {(() => {
             const isThreeColumnLayout = activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single');
+            const hasRightColumn = activeTab === 'generate' || activeTab === 'customize' || activeTab === 'export';
             return (
-              <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
+              <div className={`${isThreeColumnLayout ? 'lg:col-span-8' : 'lg:col-span-12'} ${hasRightColumn ? 'order-2 lg:order-1' : ''} bg-white/50 dark:bg-[#0C0C0C]/50 backdrop-blur-md rounded-3xl p-4 md:p-8 border border-neutral-200 dark:border-white/5 shadow-glass dark:shadow-glass-dark transition-all duration-300`}>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeTab}
@@ -494,8 +495,8 @@ export default function App() {
 
           {/* Right Live Preview Sticky Column (Single Mode) */}
           {(activeTab === 'generate' || activeTab === 'customize' || (activeTab === 'export' && exportMode === 'single')) && (
-            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
+            <div className="lg:col-span-4 order-1 lg:order-2 lg:sticky lg:top-24 space-y-4 md:space-y-6 w-full">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-4 md:p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400 select-none">Live Canvas Preview</span>
                   <div className="flex items-center space-x-1 border border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 px-2 py-0.5 rounded-full text-[9px] font-bold text-neutral-500 uppercase">
@@ -571,8 +572,8 @@ export default function App() {
 
           {/* Right Dashboard Sticky Column (Batch Mode) */}
           {activeTab === 'export' && exportMode === 'batch' && (
-            <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
+            <div className="lg:col-span-4 order-1 lg:order-2 lg:sticky lg:top-24 space-y-4 md:space-y-6 w-full">
+              <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl p-4 md:p-6 shadow-premium dark:shadow-premium-dark flex flex-col items-center">
                 <div className="w-full flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400 select-none">Batch Overview</span>
                   <div className="flex items-center space-x-1 border border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20 px-2 py-0.5 rounded-full text-[9px] font-bold text-neutral-500 uppercase">

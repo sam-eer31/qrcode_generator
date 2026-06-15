@@ -45,11 +45,11 @@ export const TextForm: React.FC<FormProps> = ({ initialText, onChange }) => {
         <Label htmlFor="text-input">Plain Text</Label>
         <textarea
           id="text-input"
-          rows={4}
+          rows={8}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type your message here..."
-          className="w-full px-4 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none"
+          className="w-full px-4 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-y min-h-[150px]"
         />
       </div>
     </div>

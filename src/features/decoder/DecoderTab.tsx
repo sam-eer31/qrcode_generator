@@ -135,11 +135,11 @@ export const DecoderTab: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className="relative flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-3xl p-8 bg-white/50 dark:bg-[#0C0C0C]/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all cursor-pointer min-h-[300px]"
+          className="relative flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-accent rounded-3xl p-6 sm:p-8 bg-white/50 dark:bg-[#0C0C0C]/50 hover:bg-neutral-50 dark:hover:bg-neutral-950/20 transition-all cursor-pointer min-h-[200px] sm:min-h-[300px]"
         >
           {imageSrc ? (
-            <div className="relative w-full max-h-[250px] flex items-center justify-center overflow-hidden rounded-xl">
-              <img src={imageSrc} alt="Uploaded QR Code" className="max-h-[220px] object-contain rounded" />
+            <div className="relative w-full max-h-[200px] sm:max-h-[250px] flex items-center justify-center overflow-hidden rounded-xl">
+              <img src={imageSrc} alt="Uploaded QR Code" className="max-h-[180px] sm:max-h-[220px] object-contain rounded" />
               <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                 <span className="text-xs font-semibold text-white bg-black/60 px-3 py-1.5 rounded-full">Click to replace file</span>
               </div>
@@ -196,19 +196,19 @@ export const DecoderTab: React.FC = () => {
             </div>
 
             {/* Key-Value Details */}
-            <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark">
-              <table className="w-full text-left border-collapse">
+            <div className="bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-premium dark:shadow-premium-dark overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse min-w-[320px]">
                 <thead>
                   <tr className="border-b border-neutral-200 dark:border-neutral-900 bg-neutral-50/50 dark:bg-neutral-950/20">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Parameter</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Detected Value</th>
+                    <th className="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Parameter</th>
+                    <th className="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">Detected Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(parsedInfo.details).map(([key, val]) => (
                     <tr key={key} className="border-b border-neutral-200 dark:border-neutral-900 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/10 transition-colors">
-                      <td className="px-5 py-3.5 text-xs font-bold text-neutral-600 dark:text-neutral-400 capitalize">{key}</td>
-                      <td className="px-5 py-3.5 text-xs font-mono font-medium text-neutral-900 dark:text-neutral-200 text-break-all select-all">{val || '(Empty)'}</td>
+                      <td className="px-3 sm:px-5 py-3.5 text-xs font-bold text-neutral-600 dark:text-neutral-400 capitalize">{key}</td>
+                      <td className="px-3 sm:px-5 py-3.5 text-xs font-mono font-medium text-neutral-900 dark:text-neutral-200 text-break-all select-all">{val || '(Empty)'}</td>
                     </tr>
                   ))}
                 </tbody>
