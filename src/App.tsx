@@ -738,7 +738,7 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Command Palette</span>
-              <p className="text-[10px] text-neutral-400">Enable search bar and ⌘K shortcuts</p>
+              <p className="text-[10px] text-neutral-400">Enable search bar and {isMac ? 'Cmd+K' : 'Ctrl+K'} shortcuts</p>
             </div>
             <button
               onClick={() => setSettings(prev => ({ ...prev, commandPaletteEnabled: !prev.commandPaletteEnabled }))}
