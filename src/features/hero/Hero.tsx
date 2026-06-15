@@ -5,11 +5,10 @@ import { ArrowDown, CloudUpload } from 'lucide-react';
 
 interface HeroProps {
   onCreateClick: () => void;
-  onUploadClick: () => void;
   onCloudClick?: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick, onCloudClick }) => {
+export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick }) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });

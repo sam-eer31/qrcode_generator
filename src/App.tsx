@@ -345,10 +345,6 @@ export default function App() {
       {/* 2. Hero Landing Fold */}
       <Hero
         onCreateClick={scrollToWorkspace}
-        onUploadClick={() => {
-          setActiveTab('decode');
-          scrollToWorkspace();
-        }}
         onCloudClick={() => {
           setActiveTab('cloud');
           scrollToWorkspace();
