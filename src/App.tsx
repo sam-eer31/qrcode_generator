@@ -16,6 +16,7 @@ import {
   QrCode,
   Download,
   CloudUpload,
+  ChevronRight,
 } from 'lucide-react';
 
 // Common UI Components
@@ -114,6 +115,59 @@ export default function App() {
   const batchCanvasRef3 = useRef<HTMLCanvasElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [isMac, setIsMac] = useState(false);
+
+  // Drag-to-scroll tabs logic
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [isDraggingTabs, setIsDraggingTabs] = useState(false);
+  const [tabStartX, setTabStartX] = useState(0);
+  const [tabScrollLeft, setTabScrollLeft] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkTabScroll = useCallback(() => {
+    if (tabsContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 2); // 2px buffer
+    }
+  }, []);
+
+  useEffect(() => {
+    checkTabScroll();
+    window.addEventListener('resize', checkTabScroll);
+    return () => window.removeEventListener('resize', checkTabScroll);
+  }, [checkTabScroll]);
+
+  useEffect(() => {
+    setTimeout(checkTabScroll, 100);
+  }, [checkTabScroll, activeTab]);
+
+  const handleTabMouseDown = (e: React.MouseEvent) => {
+    if (!tabsContainerRef.current) return;
+    setIsDraggingTabs(true);
+    setTabStartX(e.pageX - tabsContainerRef.current.offsetLeft);
+    setTabScrollLeft(tabsContainerRef.current.scrollLeft);
+  };
+
+  const handleTabMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTabs || !tabsContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tabsContainerRef.current.offsetLeft;
+    const walk = (x - tabStartX) * 1.5; // Drag speed multiplier
+    tabsContainerRef.current.scrollLeft = tabScrollLeft - walk;
+  };
+
+  const handleTabClick = (e: React.MouseEvent, tabId: string) => {
+    // Prevent click if we were dragging
+    if (isDraggingTabs && tabsContainerRef.current) {
+      const currentX = e.pageX - tabsContainerRef.current.offsetLeft;
+      if (Math.abs(currentX - tabStartX) > 5) {
+        e.preventDefault();
+        return;
+      }
+    }
+    setActiveTab(tabId);
+  };
 
   // Stable text changer callback to prevent infinite re-render loops in forms
   const handleTextChange = useCallback((textValue: string) => {
@@ -447,37 +501,59 @@ export default function App() {
           </div>
           
           {/* Tabs bar */}
-          <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-full sm:w-fit shadow-premium dark:shadow-premium-dark select-none -mx-4 px-4 sm:mx-0 sm:px-1.5">
-            {tabsList.map((t) => {
-              const Icon = t.icon;
-              const isActive = activeTab === t.id;
-              const isCloud = t.id === 'cloud';
-              
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setActiveTab(t.id)}
-                  className={`relative flex-shrink-0 flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
-                    isActive
-                      ? isCloud
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 scale-105 z-10'
-                        : 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                      : isCloud
-                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30'
-                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-350'
-                  }`}
-                >
-                  <Icon className={`h-3.5 w-3.5 ${isCloud && !isActive ? 'animate-pulse' : ''}`} />
-                  <span>{t.label}</span>
-                  {isCloud && (
-                    <span className={`ml-1.5 flex items-center space-x-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'}`}>
-                      <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                      <span>Live</span>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="relative w-full sm:w-fit -mx-4 sm:mx-0">
+            {/* Left Fade Indicator */}
+            {canScrollLeft && (
+              <div className="absolute left-4 sm:left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-[#0E0E0E] to-transparent z-20 pointer-events-none rounded-l-2xl" />
+            )}
+            
+            <div 
+              ref={tabsContainerRef}
+              onScroll={checkTabScroll}
+              onMouseDown={handleTabMouseDown}
+              onMouseLeave={() => setIsDraggingTabs(false)}
+              onMouseUp={() => setIsDraggingTabs(false)}
+              onMouseMove={handleTabMouseMove}
+              className={`flex overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1.5 rounded-2xl bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 w-full sm:w-fit shadow-premium dark:shadow-premium-dark select-none px-4 sm:px-1.5 transition-all ${isDraggingTabs ? 'cursor-grabbing' : 'cursor-grab'}`}
+            >
+              {tabsList.map((t) => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                const isCloud = t.id === 'cloud';
+                
+                return (
+                  <button
+                    key={t.id}
+                    onClick={(e) => handleTabClick(e, t.id)}
+                    className={`relative flex-shrink-0 flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
+                      isActive
+                        ? isCloud
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 scale-105 z-10'
+                          : 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                        : isCloud
+                          ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30'
+                          : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-350'
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isCloud && !isActive ? 'animate-pulse' : ''}`} />
+                    <span>{t.label}</span>
+                    {isCloud && (
+                      <span className={`ml-1.5 flex items-center space-x-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'}`}>
+                        <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                        <span>Live</span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right Fade & Chevron Indicator */}
+            {canScrollRight && (
+              <div className="absolute right-0 sm:right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-[#0E0E0E] to-transparent z-20 pointer-events-none rounded-r-2xl flex items-center justify-end pr-2">
+                <ChevronRight className="w-4 h-4 text-neutral-400 dark:text-neutral-500 animate-pulse drop-shadow-md" />
+              </div>
+            )}
           </div>
         </div>
 
