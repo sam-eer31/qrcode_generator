@@ -22,8 +22,8 @@ import {
 import { Button } from './components/ui/Button';
 import { Modal } from './components/ui/Modal';
 import { Select, Label } from './components/ui/Input';
-import { ThemeToggle } from './components/ui/ThemeToggle';
 import { CommandPalette } from './components/ui/CommandPalette';
+import { supabase, isSupabaseConfigured } from './utils/supabase';
 
 
 // Hooks
@@ -99,6 +99,7 @@ export default function App() {
     defaultSize: 1024,
     animationsEnabled: true,
     commandPaletteEnabled: false,
+    theme: 'system' as 'light' | 'dark' | 'system',
   });
 
   // Local storage history state
@@ -141,6 +142,76 @@ export default function App() {
   useEffect(() => {
     setOptions(prev => ({ ...prev, size: settings.defaultSize }));
   }, [settings.defaultSize]);
+
+  // Handle System Theme applying
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const applyTheme = (themePref: 'light' | 'dark' | 'system') => {
+      root.classList.remove('light', 'dark');
+      if (themePref === 'system') {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.add(systemDark ? 'dark' : 'light');
+      } else {
+        root.classList.add(themePref);
+      }
+    };
+
+    applyTheme(settings.theme);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = () => {
+      if (settings.theme === 'system') applyTheme('system');
+    };
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, [settings.theme]);
+
+  // Cloud Sync Logic for Preferences
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !supabase) return;
+
+    // Load from Cloud initially
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const userTheme = session?.user?.user_metadata?.app_settings;
+      if (userTheme) {
+        setSettings(prev => ({ ...prev, ...userTheme }));
+      }
+    });
+
+    // Listen to changes in auth state to resync
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const cloudSettings = session.user.user_metadata?.app_settings;
+        if (cloudSettings) {
+          setSettings(prev => ({ ...prev, ...cloudSettings }));
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setSettings]);
+
+  // Sync back to cloud when settings change locally
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !supabase) return;
+    
+    const syncToCloud = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        // Prevent unnecessary network calls if metadata is identical (shallow skip)
+        const currentMeta = data.session.user.user_metadata?.app_settings;
+        if (JSON.stringify(currentMeta) !== JSON.stringify(settings)) {
+          await supabase.auth.updateUser({
+            data: { app_settings: settings }
+          });
+        }
+      }
+    };
+    
+    // Debounce cloud sync slightly
+    const timeout = setTimeout(syncToCloud, 1500);
+    return () => clearTimeout(timeout);
+  }, [settings]);
 
   // Check URL parameters for shared content on initial mount
   useEffect(() => {
@@ -258,6 +329,7 @@ export default function App() {
         defaultSize: 1024,
         animationsEnabled: true,
         commandPaletteEnabled: false,
+        theme: 'system',
       });
       setIsSettingsOpen(false);
     }
@@ -336,8 +408,6 @@ export default function App() {
           )}
 
           <HeaderAuth onOpenDashboard={() => setShowCloudDashboard(true)} />
-
-          <ThemeToggle />
 
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -686,83 +756,120 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         title="Application Preferences"
       >
-        <div className="space-y-6">
-          <div>
-            <Label htmlFor="default-format-selector">Default Export Format</Label>
-            <Select
-              id="default-format-selector"
-              value={settings.defaultFormat}
-              onChange={(e) => setSettings(prev => ({ ...prev, defaultFormat: e.target.value }))}
-              options={[
-                { value: 'png', label: 'PNG Raster (.png)' },
-                { value: 'svg', label: 'SVG Vector (.svg)' },
-                { value: 'jpeg', label: 'JPEG Image (.jpg)' },
-                { value: 'webp', label: 'WebP Format (.webp)' },
-                { value: 'pdf', label: 'PDF Document (.pdf)' },
-              ]}
-            />
-          </div>
+        <div className="space-y-8 pb-4">
+          
+          {/* Appearance & Behavior */}
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider pl-1">Appearance & Behavior</h3>
+            
+            <div className="flex flex-col space-y-3 bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/50">
+              
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200/50 dark:border-neutral-800/50">
+                <div>
+                  <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Theme Preference</span>
+                  <p className="text-[10px] text-neutral-500">Choose your interface color mode</p>
+                </div>
+                <div className="flex items-center p-1 bg-neutral-200/50 dark:bg-neutral-800/50 rounded-xl">
+                  {(['light', 'system', 'dark'] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setSettings(prev => ({ ...prev, theme: t }))}
+                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg capitalize transition-all ${
+                        settings.theme === t 
+                          ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' 
+                          : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div>
-            <Label htmlFor="default-resolution-selector">Default Canvas Resolution</Label>
-            <Select
-              id="default-resolution-selector"
-              value={settings.defaultSize.toString()}
-              onChange={(e) => setSettings(prev => ({ ...prev, defaultSize: parseInt(e.target.value) }))}
-              options={[
-                { value: '512', label: '512 px (Standard)' },
-                { value: '1024', label: '1024 px (High Res)' },
-                { value: '2048', label: '2048 px (Ultra High)' },
-                { value: '4096', label: '4096 px (Print Quality)' },
-              ]}
-            />
-          </div>
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200/50 dark:border-neutral-800/50">
+                <div>
+                  <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Page Animations</span>
+                  <p className="text-[10px] text-neutral-500">Enable smooth Framer Motion transitions</p>
+                </div>
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, animationsEnabled: !prev.animationsEnabled }))}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    settings.animationsEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.animationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Page Animations</span>
-              <p className="text-[10px] text-neutral-400">Enable smooth Framer Motion transitions</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Command Palette</span>
+                  <p className="text-[10px] text-neutral-500">Enable search bar and {isMac ? 'Cmd+K' : 'Ctrl+K'} shortcuts</p>
+                </div>
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, commandPaletteEnabled: !prev.commandPaletteEnabled }))}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    settings.commandPaletteEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.commandPaletteEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+
             </div>
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, animationsEnabled: !prev.animationsEnabled }))}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                settings.animationsEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
-              }`}
-            >
-              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                settings.animationsEnabled ? 'translate-x-5' : 'translate-x-0'
-              }`} />
-            </button>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Command Palette</span>
-              <p className="text-[10px] text-neutral-400">Enable search bar and {isMac ? 'Cmd+K' : 'Ctrl+K'} shortcuts</p>
+          {/* Export Defaults */}
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider pl-1">Export Defaults</h3>
+            
+            <div className="flex flex-col space-y-4 bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/50">
+              
+              <div>
+                <Label htmlFor="default-format-selector">Default File Format</Label>
+                <Select
+                  id="default-format-selector"
+                  value={settings.defaultFormat}
+                  onChange={(e) => setSettings(prev => ({ ...prev, defaultFormat: e.target.value }))}
+                  options={[
+                    { value: 'png', label: 'PNG Raster (.png)' },
+                    { value: 'svg', label: 'SVG Vector (.svg)' },
+                    { value: 'jpeg', label: 'JPEG Image (.jpg)' },
+                    { value: 'webp', label: 'WebP Format (.webp)' },
+                    { value: 'pdf', label: 'PDF Document (.pdf)' },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="default-resolution-selector">Default Canvas Resolution</Label>
+                <Select
+                  id="default-resolution-selector"
+                  value={settings.defaultSize.toString()}
+                  onChange={(e) => setSettings(prev => ({ ...prev, defaultSize: parseInt(e.target.value) }))}
+                  options={[
+                    { value: '512', label: '512 px (Standard)' },
+                    { value: '1024', label: '1024 px (High Res)' },
+                    { value: '2048', label: '2048 px (Ultra High)' },
+                    { value: '4096', label: '4096 px (Print Quality)' },
+                  ]}
+                />
+              </div>
+
             </div>
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, commandPaletteEnabled: !prev.commandPaletteEnabled }))}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                settings.commandPaletteEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
-              }`}
-            >
-              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                settings.commandPaletteEnabled ? 'translate-x-5' : 'translate-x-0'
-              }`} />
-            </button>
           </div>
 
-          <hr className="border-neutral-200 dark:border-neutral-900" />
-
-
-
-          <div className="border-t border-neutral-200 dark:border-neutral-900 pt-4 flex space-x-3">
+          <div className="border-t border-neutral-200 dark:border-neutral-900 pt-6 flex space-x-3">
             <Button
               onClick={handleResetSettings}
               variant="outline"
               className="w-full text-red-500 border-red-500/30 hover:bg-red-500/10 hover:text-red-600"
             >
-              Reset Settings
+              Reset to Defaults
             </Button>
             <Button
               onClick={() => setIsSettingsOpen(false)}
