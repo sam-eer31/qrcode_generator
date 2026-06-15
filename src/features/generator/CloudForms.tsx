@@ -177,7 +177,8 @@ const MissingFirebaseConfig = () => (
 );
 
 export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [compressedData, setCompressedData] = useState<string | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [expiryDays, setExpiryDays] = useState<'1' | '7' | '30' | 'infinite'>('1');
   const [uploading, setUploading] = useState(false);
@@ -196,7 +197,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
   if (!isFirebaseConfigured()) return <MissingFirebaseConfig />;
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type === 'image/heic' || file.type === 'image/heif') {
@@ -211,13 +212,34 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
         return;
       }
-      setSelectedFile(file);
-      setFilePreview(URL.createObjectURL(file));
-      setUploadError('');
+      
+      try {
+        setUploadProgress('Compressing image...');
+        setUploading(true);
+        const base64Data = await compressImageBase64(file);
+        
+        const approxSizeBytes = base64Data.length * 0.75;
+        if (approxSizeBytes > 900000) {
+          throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
+        }
+
+        setSelectedFile({ name: file.name, size: file.size });
+        setCompressedData(base64Data);
+        setFilePreview(base64Data);
+        setUploadError('');
+      } catch (err: any) {
+        setUploadError(err.message || 'Failed to process image');
+        setSelectedFile(null);
+        setCompressedData(null);
+        setFilePreview(null);
+      } finally {
+        setUploading(false);
+        setUploadProgress('');
+      }
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -234,29 +256,41 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
         return;
       }
-      setSelectedFile(file);
-      setFilePreview(URL.createObjectURL(file));
-      setUploadError('');
+      
+      try {
+        setUploadProgress('Compressing image...');
+        setUploading(true);
+        const base64Data = await compressImageBase64(file);
+        
+        const approxSizeBytes = base64Data.length * 0.75;
+        if (approxSizeBytes > 900000) {
+          throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
+        }
+
+        setSelectedFile({ name: file.name, size: file.size });
+        setCompressedData(base64Data);
+        setFilePreview(base64Data);
+        setUploadError('');
+      } catch (err: any) {
+        setUploadError(err.message || 'Failed to process image');
+        setSelectedFile(null);
+        setCompressedData(null);
+        setFilePreview(null);
+      } finally {
+        setUploading(false);
+        setUploadProgress('');
+      }
     }
   };
 
   const handleUpload = async () => {
-    if (!db || !selectedFile) return;
+    if (!db || !compressedData || !selectedFile) return;
     setUploading(true);
     setUploadError('');
-    setUploadProgress('Compressing & Uploading...');
+    setUploadProgress('Uploading to Cloud...');
 
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     try {
-      // Compress and convert directly to base64
-      const base64Data = await compressImageBase64(selectedFile);
-      
-      // Check if size exceeds Firestore 1MB limit (~1.048.576 bytes)
-      // Base64 string length * (3/4) gives approximate size in bytes
-      const approxSizeBytes = base64Data.length * 0.75;
-      if (approxSizeBytes > 900000) {
-        throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
-      }
 
       let expiresAt: number | null = null;
       if (expiryDays === '1') expiresAt = Date.now() + 24 * 60 * 60 * 1000;
@@ -266,7 +300,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
       await setDoc(doc(db, 'shares', shareId), {
         id: shareId,
         type: 'image',
-        content: base64Data,
+        content: compressedData,
         theme: null,
         creatorId: currentUser ? currentUser.uid : 'anonymous',
         createdAt: Date.now(),
@@ -296,6 +330,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         onReset={() => {
           setGeneratedLink('');
           setSelectedFile(null);
+          setCompressedData(null);
           setFilePreview(null);
         }}
       />
@@ -309,7 +344,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
         {filePreview ? (
           <div className="relative rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-[16/9] flex items-center justify-center">
             <img src={filePreview} alt="Preview" className="max-h-full max-w-full object-contain" />
-            <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold">Clear</button>
+            <button onClick={() => { setSelectedFile(null); setCompressedData(null); setFilePreview(null); }} className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-lg text-white text-[10px] font-bold">Clear</button>
           </div>
         ) : (
           <div
