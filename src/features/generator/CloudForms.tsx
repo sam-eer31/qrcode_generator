@@ -205,6 +205,20 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setUploadError('');
     setUploadProgress('Preparing file for upload...');
 
+    if (expiryDays === 'never' && userId) {
+      setUploadProgress('Checking limits...');
+      const { count, error: countError } = await (supabase!.from('shares') as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('creator_id', userId)
+        .is('expires_at', null);
+      if (!countError && count !== null && count >= 10) {
+        setUploadError('Maximum of 10 permanent links reached. Please delete some from your Dashboard or choose a temporary duration.');
+        setUploading(false);
+        setUploadProgress('');
+        return;
+      }
+    }
+
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     
     try {
@@ -382,6 +396,18 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
     if (!supabase || !messageText.trim()) return;
     setUploading(true);
     setUploadError('');
+
+    if (expiryDays === 'never' && userId) {
+      const { count, error: countError } = await (supabase!.from('shares') as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('creator_id', userId)
+        .is('expires_at', null);
+      if (!countError && count !== null && count >= 10) {
+        setUploadError('Maximum of 10 permanent links reached. Please delete some from your Dashboard or choose a temporary duration.');
+        setUploading(false);
+        return;
+      }
+    }
 
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     try {
