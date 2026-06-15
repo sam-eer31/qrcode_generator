@@ -6,9 +6,10 @@ import { ArrowDown, CloudUpload } from 'lucide-react';
 interface HeroProps {
   onCreateClick: () => void;
   onCloudClick?: () => void;
+  commandPaletteEnabled?: boolean;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick }) => {
+export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick, commandPaletteEnabled = false }) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -130,8 +131,12 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onCloudClick }) => {
             <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">G</kbd> to Generate</span>
             <span>•</span>
             <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">D</kbd> to Decode</span>
-            <span>•</span>
-            <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">⌘ K</kbd> for commands</span>
+            {commandPaletteEnabled && (
+              <>
+                <span>•</span>
+                <span>Press <kbd className="px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono">⌘ K</kbd> for commands</span>
+              </>
+            )}
           </motion.div>
         </div>
 

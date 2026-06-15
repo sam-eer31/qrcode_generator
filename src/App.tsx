@@ -98,6 +98,7 @@ export default function App() {
     defaultFormat: 'png',
     defaultSize: 1024,
     animationsEnabled: true,
+    commandPaletteEnabled: false,
   });
 
   // Local storage history state
@@ -151,6 +152,7 @@ export default function App() {
 
   // Command palette keyboard shortcut listener (CMD+K or CTRL+K)
   useKeyPress('k', (e) => {
+    if (!settings.commandPaletteEnabled) return;
     e.preventDefault();
     setIsPaletteOpen(prev => !prev);
   }, { ctrlOrCmd: true, ignoreInputs: false });
@@ -253,6 +255,7 @@ export default function App() {
         defaultFormat: 'png',
         defaultSize: 1024,
         animationsEnabled: true,
+        commandPaletteEnabled: false,
       });
       setIsSettingsOpen(false);
     }
@@ -317,16 +320,18 @@ export default function App() {
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
-          <button
-            onClick={() => setIsPaletteOpen(true)}
-            className="hidden sm:flex items-center space-x-3 px-3 py-1.5 rounded-full border border-neutral-200/50 dark:border-neutral-850 bg-white/40 dark:bg-black/40 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors shadow-premium dark:shadow-premium-dark focus:outline-none"
-            aria-label="Search Command Palette"
-          >
-            <span>Search commands...</span>
-            <kbd className="px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono text-[9px]">
-              ⌘K
-            </kbd>
-          </button>
+          {settings.commandPaletteEnabled && (
+            <button
+              onClick={() => setIsPaletteOpen(true)}
+              className="hidden sm:flex items-center space-x-3 px-3 py-1.5 rounded-full border border-neutral-200/50 dark:border-neutral-850 bg-white/40 dark:bg-black/40 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors shadow-premium dark:shadow-premium-dark focus:outline-none"
+              aria-label="Search Command Palette"
+            >
+              <span>Search commands...</span>
+              <kbd className="px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 font-mono text-[9px]">
+                ⌘K
+              </kbd>
+            </button>
+          )}
 
           <HeaderAuth onOpenDashboard={() => setShowCloudDashboard(true)} />
 
@@ -349,6 +354,7 @@ export default function App() {
           setActiveTab('cloud');
           scrollToWorkspace();
         }}
+        commandPaletteEnabled={settings.commandPaletteEnabled}
       />
 
       {/* 3. Main Workspace Container */}
@@ -723,6 +729,23 @@ export default function App() {
             >
               <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                 settings.animationsEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Command Palette</span>
+              <p className="text-[10px] text-neutral-400">Enable search bar and ⌘K shortcuts</p>
+            </div>
+            <button
+              onClick={() => setSettings(prev => ({ ...prev, commandPaletteEnabled: !prev.commandPaletteEnabled }))}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                settings.commandPaletteEnabled ? 'bg-accent' : 'bg-neutral-200 dark:bg-neutral-800'
+              }`}
+            >
+              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                settings.commandPaletteEnabled ? 'translate-x-5' : 'translate-x-0'
               }`} />
             </button>
           </div>
