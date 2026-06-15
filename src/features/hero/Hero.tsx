@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, CloudUpload } from 'lucide-react';
 
 interface HeroProps {
   onCreateClick: () => void;
   onUploadClick: () => void;
+  onCloudClick?: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
+export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick, onCloudClick }) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -82,7 +83,8 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/15 text-accent text-[10px] font-bold tracking-wider uppercase"
           >
-            <span>The Ultimate Open-Source QR Toolkit</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span>Now with Live Cloud Hosting</span>
           </motion.div>
 
           <motion.h1
@@ -92,7 +94,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-800 dark:from-white dark:via-neutral-100 dark:to-neutral-300 font-sans"
           >
             Generate. <br className="hidden sm:inline" />
-            <span className="text-accent">Decode.</span> Inspect.
+            <span className="text-accent">Cloud Sync.</span> Decode.
           </motion.h1>
 
           <motion.p
@@ -101,7 +103,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-sm md:text-base text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium"
           >
-            Everything you need for QR codes. Beautiful, custom-designed, and lightning fast. Save styles, parse parameters, and print vectors.
+            Everything you need for professional QR codes. Design custom static codes, or use <strong className="text-accent font-bold">QR Studio Cloud</strong> to host dynamic notes and images that update instantly without reprinting.
           </motion.p>
 
           <motion.div
@@ -111,10 +113,11 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick }) => {
             className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 w-full sm:w-auto px-4 sm:px-0"
           >
             <Button onClick={onCreateClick} variant="accent" size="lg" className="shadow-lg shadow-accent/20 w-full sm:w-auto">
-              Create QR
+              Create QR Code
             </Button>
-            <Button onClick={onUploadClick} variant="secondary" size="lg" className="w-full sm:w-auto">
-              Upload QR
+            <Button onClick={onCloudClick} variant="secondary" size="lg" className="w-full sm:w-auto flex items-center justify-center space-x-2 border-accent/20 text-accent dark:text-accent-hover bg-accent/5 hover:bg-accent/10">
+              <CloudUpload className="w-4 h-4" />
+              <span>Try Cloud Share</span>
             </Button>
           </motion.div>
 

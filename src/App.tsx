@@ -349,6 +349,10 @@ export default function App() {
           setActiveTab('decode');
           scrollToWorkspace();
         }}
+        onCloudClick={() => {
+          setActiveTab('cloud');
+          scrollToWorkspace();
+        }}
       />
 
       {/* 3. Main Workspace Container */}
