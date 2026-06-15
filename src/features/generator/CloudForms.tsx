@@ -118,43 +118,47 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
 
 const compressImageBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 400;
-        const MAX_HEIGHT = 400;
-        let width = img.width;
-        let height = img.height;
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
+    
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 400;
+      const MAX_HEIGHT = 400;
+      let width = img.width;
+      let height = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
         }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
         // Export as heavily compressed Base64 Data URL to fit in Firestore 1MB limit
-        // 400x400 with 0.5 quality guarantees tiny size (<100KB)
         const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
         resolve(dataUrl);
-      };
-      img.onerror = reject;
+      } else {
+        reject(new Error('Failed to get canvas context.'));
+      }
     };
-    reader.onerror = reject;
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Browser failed to read the image format. Please try a standard JPG/PNG.'));
+    };
   });
 };
 
@@ -195,12 +199,16 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (file.type === 'image/heic' || file.type === 'image/heif') {
+        setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG, or change your phone camera settings to "Most Compatible".');
+        return;
+      }
       if (!file.type.startsWith('image/')) {
         setUploadError('Only image uploads are supported.');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError('Image exceeds the 5MB size limit. Please choose a smaller file.');
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
         return;
       }
       setSelectedFile(file);
@@ -214,12 +222,16 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      if (file.type === 'image/heic' || file.type === 'image/heif') {
+        setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG.');
+        return;
+      }
       if (!file.type.startsWith('image/')) {
         setUploadError('Only image uploads are supported.');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError('Image exceeds the 5MB size limit. Please choose a smaller file.');
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError('Image exceeds the 10MB size limit. Please choose a smaller file.');
         return;
       }
       setSelectedFile(file);
@@ -307,7 +319,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${dragOver ? 'border-accent bg-accent/5' : 'border-neutral-200 dark:border-neutral-850 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white/20 dark:bg-black/20'}`}
           >
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/jpeg, image/png, image/webp, image/gif" className="hidden" />
             <div className="h-12 w-12 rounded-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 flex items-center justify-center mb-3"><CloudUpload className="w-5 h-5 text-accent" /></div>
             <span className="text-xs font-bold text-neutral-800 dark:text-white">Drag and drop your image here</span>
             <span className="text-[10px] font-medium text-neutral-450 mt-1">Supports PNG, JPG, WEBP</span>
