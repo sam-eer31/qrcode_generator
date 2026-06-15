@@ -205,7 +205,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setUploadError('');
     setUploadProgress('Preparing file for upload...');
 
-    if (expiryDays === 'never' && userId) {
+    if (expiryDays === 'infinite' && userId) {
       setUploadProgress('Checking limits...');
       const { count, error: countError } = await (supabase!.from('shares') as any)
         .select('*', { count: 'exact', head: true })
@@ -397,7 +397,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setUploading(true);
     setUploadError('');
 
-    if (expiryDays === 'never' && userId) {
+    if (expiryDays === 'infinite' && userId) {
       const { count, error: countError } = await (supabase!.from('shares') as any)
         .select('*', { count: 'exact', head: true })
         .eq('creator_id', userId)
