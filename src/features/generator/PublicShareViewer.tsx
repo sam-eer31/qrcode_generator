@@ -23,35 +23,35 @@ export const THEME_GRADIENTS: Record<string, { bg: string; text: string; shadow:
     text: 'text-neutral-900',
     shadow: 'shadow-neutral-200/50',
     border: 'border-neutral-200',
-    texture: 'invert opacity-[0.05]'
+    texture: 'opacity-10'
   },
   ocean: {
     bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
     text: 'text-white',
     shadow: 'shadow-blue-500/20',
     border: 'border-blue-400/30',
-    texture: 'opacity-10 mix-blend-overlay'
+    texture: 'opacity-20'
   },
   sunset: {
     bg: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #e11d48 100%)',
     text: 'text-white',
     shadow: 'shadow-orange-500/20',
     border: 'border-orange-400/30',
-    texture: 'opacity-10 mix-blend-overlay'
+    texture: 'opacity-20'
   },
   forest: {
     bg: 'linear-gradient(135deg, #10b981 0%, #0d9488 100%)',
     text: 'text-white',
     shadow: 'shadow-emerald-500/20',
     border: 'border-emerald-400/30',
-    texture: 'opacity-10 mix-blend-overlay'
+    texture: 'opacity-20'
   },
   cyberpunk: {
     bg: 'linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #4338ca 100%)',
     text: 'text-white',
     shadow: 'shadow-purple-500/20',
     border: 'border-purple-400/30',
-    texture: 'opacity-10 mix-blend-overlay'
+    texture: 'opacity-20'
   },
   minimalist: {
     bg: 'linear-gradient(135deg, #262626 0%, #0a0a0a 100%)',
@@ -232,7 +232,7 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
       return (
         <div className="space-y-4">
           <div 
-            style={{ backgroundImage: themeGradient.bg }}
+            style={{ background: themeGradient.bg }}
             className={`relative rounded-3xl p-8 border ${themeGradient.border} shadow-glass ${themeGradient.shadow} flex flex-col justify-between min-h-[200px] overflow-hidden`}
           >
             {/* Dynamic Pattern Overlay */}
