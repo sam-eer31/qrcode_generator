@@ -196,6 +196,7 @@ export default function App() {
     if (!isSupabaseConfigured() || !supabase) return;
     
     const syncToCloud = async () => {
+      if (!supabase) return;
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         // Prevent unnecessary network calls if metadata is identical (shallow skip)
