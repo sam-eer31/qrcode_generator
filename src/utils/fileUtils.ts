@@ -95,3 +95,54 @@ export const readFileAsDataURLWithRetry = (
     tryRead();
   });
 };
+
+/**
+ * Extracts image data robustly by drawing it to a hidden canvas.
+ * This completely bypasses the notoriously buggy FileReader on iOS Safari
+ * which throws NotReadableError when accessing iCloud/Gallery photos.
+ * 
+ * @param file The original File object
+ */
+export const extractFileViaCanvas = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get canvas context');
+        
+        ctx.drawImage(img, 0, 0);
+        
+        // Preserve original mime type, default to jpeg if unknown
+        const targetType = file.type || 'image/jpeg';
+        
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (blob) {
+            // Reconstruct the File object with the original name
+            const newFile = new File([blob], file.name, { type: targetType });
+            resolve(newFile);
+          } else {
+            reject(new Error('Failed to extract image blob from canvas'));
+          }
+        }, targetType, 1.0); // 1.0 = maximum quality preservation
+      } catch (err) {
+        URL.revokeObjectURL(objectUrl);
+        reject(err);
+      }
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to load image for extraction'));
+    };
+    
+    img.src = objectUrl;
+  });
+};

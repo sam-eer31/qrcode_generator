@@ -13,7 +13,7 @@ import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
-import { readFileAsArrayBufferWithRetry } from '../../utils/fileUtils';
+import { extractFileViaCanvas } from '../../utils/fileUtils';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
@@ -206,11 +206,9 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     const shareId = `share-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     
     try {
-      // Create a stable file object right before uploading to bypass iOS mobile file locking bugs.
-      // By doing this here instead of on selection, we naturally wait for iCloud downloads to finish while the user configures the form.
-      const arrayBuffer = await readFileAsArrayBufferWithRetry(rawFile, 15, 500);
-      const stableBlob = new Blob([arrayBuffer], { type: rawFile.type });
-      const stableFileForUpload = new File([stableBlob], rawFile.name, { type: rawFile.type });
+      // Use the ultra-robust Canvas extractor. 
+      // This completely bypasses the File System locks that iOS WebKit throws for iCloud photos.
+      const stableFileForUpload = await extractFileViaCanvas(rawFile);
 
       setUploadProgress('Uploading to Storage...');
       
