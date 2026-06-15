@@ -16,19 +16,6 @@ const getSupabaseConfig = (): SupabaseConfig | null => {
     return envConfig;
   }
 
-  // 2. Check localStorage custom config
-  try {
-    const localConfigStr = localStorage.getItem('qr-studio-supabase-config');
-    if (localConfigStr) {
-      const parsed = JSON.parse(localConfigStr);
-      if (parsed && parsed.supabaseUrl && parsed.supabaseKey) {
-        return parsed as SupabaseConfig;
-      }
-    }
-  } catch (e) {
-    console.error('Error parsing local Supabase config:', e);
-  }
-
   return null;
 };
 

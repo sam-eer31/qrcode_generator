@@ -75,7 +75,7 @@ export const HeaderAuth: React.FC<HeaderAuthProps> = ({ onOpenDashboard }) => {
     await supabase.auth.signOut();
   };
 
-  if (!isSupabaseConfigured()) return null;
+
   if (authLoading) {
     return <div className="h-9 w-24 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-full" />;
   }

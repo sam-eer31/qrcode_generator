@@ -116,19 +116,7 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
   );
 };
 
-const MissingSupabaseConfig = () => (
-  <div className="space-y-6 text-center py-10 border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-neutral-50 dark:bg-[#0E0E0E]">
-    <div className="h-16 w-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500">
-      <Settings className="w-8 h-8 animate-spin-slow" />
-    </div>
-    <div className="space-y-2">
-      <h2 className="text-base font-bold text-neutral-900 dark:text-white">Cloud Integration Required</h2>
-      <p className="text-xs text-neutral-450 dark:text-neutral-500 max-w-sm mx-auto leading-relaxed px-4">
-        Supabase storage and database are required to host cloud data. Click the Settings icon in the header and paste your Supabase credentials.
-      </p>
-    </div>
-  </div>
-);
+
 
 export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
@@ -156,7 +144,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     }
   }, []);
 
-  if (!isSupabaseConfigured()) return <MissingSupabaseConfig />;
+
 
   const processFileImmediately = async (file: File) => {
     if (file.type === 'image/heic' || file.type === 'image/heif') {
@@ -379,7 +367,7 @@ export const CloudNoteForm: React.FC<CloudFormProps> = ({ onChange }) => {
     }
   }, []);
 
-  if (!isSupabaseConfigured()) return <MissingSupabaseConfig />;
+
 
   const handleUpload = async () => {
     if (!supabase || !messageText.trim()) return;

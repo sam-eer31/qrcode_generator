@@ -24,7 +24,7 @@ import { Modal } from './components/ui/Modal';
 import { Select, Label } from './components/ui/Input';
 import { ThemeToggle } from './components/ui/ThemeToggle';
 import { CommandPalette } from './components/ui/CommandPalette';
-import { SupabaseConfigForm } from './components/SupabaseConfigForm';
+
 
 // Hooks
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -716,11 +716,7 @@ export default function App() {
 
           <hr className="border-neutral-200 dark:border-neutral-900" />
 
-          <div className="space-y-2">
-            <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-350">Cloud Sharing Config</span>
-            <p className="text-[10px] text-neutral-400">Configure your custom Supabase database and storage for image & message hosting.</p>
-            <SupabaseConfigForm />
-          </div>
+
 
           <div className="border-t border-neutral-200 dark:border-neutral-900 pt-4 flex space-x-3">
             <Button
