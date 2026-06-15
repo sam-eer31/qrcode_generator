@@ -13,7 +13,7 @@ import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
-import { readFileAsArrayBufferWithRetry, readFileAsDataURLWithRetry } from '../../utils/fileUtils';
+import { readFileAsArrayBufferWithRetry } from '../../utils/fileUtils';
 
 interface CloudFormProps {
   onChange: (link: string) => void;
