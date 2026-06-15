@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Label, Select, Slider, Switch } from '../../components/ui/Input';
 import { PRESETS } from '../../utils/qrUtils';
 import type { QRStyleOptions } from '../../utils/qrUtils';
 import { Upload, X, ShieldAlert, RotateCw } from 'lucide-react';
+import { readFileAsDataURLWithRetry } from '../../utils/fileUtils';
 
 const FAMOUS_LOGOS = [
   { name: 'WhatsApp', url: 'https://cdn.simpleicons.org/whatsapp/25D366' },
@@ -23,6 +24,7 @@ interface CustomizationPanelProps {
 
 export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options, setOptions }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   const updateOption = <K extends keyof QRStyleOptions>(key: K, value: QRStyleOptions[K]) => {
     setOptions((prev) => ({ ...prev, [key]: value }));
@@ -43,21 +45,25 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
     );
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          updateOption('logoUrl', event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      setLogoError(null);
+      try {
+        const dataUrl = await readFileAsDataURLWithRetry(file);
+        updateOption('logoUrl', dataUrl);
+      } catch (err: any) {
+        console.error('Logo upload error:', err);
+        setLogoError(err.message || 'Failed to read logo file.');
+      } finally {
+        e.target.value = ''; // Reset input value so same file can be selected again
+      }
     }
   };
 
   const clearLogo = () => {
     updateOption('logoUrl', null);
+    setLogoError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -283,6 +289,13 @@ export const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ options,
                 <span className="text-xs font-semibold tracking-wide uppercase text-neutral-600 dark:text-neutral-400">Upload Image / Icon</span>
                 <span className="text-[10px] text-neutral-400 mt-0.5">PNG, JPG or SVG (Max 1MB)</span>
               </button>
+
+              {logoError && (
+                <div className="text-[10px] text-red-500 font-semibold bg-red-500/10 p-2 rounded-lg flex items-center space-x-2">
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
+                  <span>{logoError}</span>
+                </div>
+              )}
               
               <div className="pt-2">
                 <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-2 block">Or choose a popular brand:</span>

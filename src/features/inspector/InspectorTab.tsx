@@ -3,6 +3,7 @@ import { decodeQRFromImage } from '../../utils/qrUtils';
 import { LayoutGrid, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
+import { readFileAsDataURLWithRetry } from '../../utils/fileUtils';
 
 export const InspectorTab: React.FC = () => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -10,7 +11,7 @@ export const InspectorTab: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processImageFile = (file: File) => {
+  const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Please upload a valid image file.');
       return;
@@ -19,37 +20,40 @@ export const InspectorTab: React.FC = () => {
     setError(null);
     setQrObject(null);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        const dataUrl = e.target.result as string;
-        setImageSrc(dataUrl);
-        
-        const img = new Image();
-        img.onload = () => {
-          const result = decodeQRFromImage(img);
-          if (result.success && result.data) {
-            try {
-              // Reconstruct QR code details from decoded text
-              const qr = QRCode.create(result.data, { errorCorrectionLevel: 'H' });
-              setQrObject(qr);
-            } catch (err) {
-              setError('Failed to run technical analysis on decoded string.');
-            }
-          } else {
-            setError(result.error || 'Failed to decode QR code for inspection.');
+    try {
+      const dataUrl = await readFileAsDataURLWithRetry(file);
+      setImageSrc(dataUrl);
+      
+      const img = new Image();
+      img.onload = () => {
+        const result = decodeQRFromImage(img);
+        if (result.success && result.data) {
+          try {
+            // Reconstruct QR code details from decoded text
+            const qr = QRCode.create(result.data, { errorCorrectionLevel: 'H' });
+            setQrObject(qr);
+          } catch (err) {
+            setError('Failed to run technical analysis on decoded string.');
           }
-        };
-        img.src = dataUrl;
-      }
-    };
-    reader.readAsDataURL(file);
+        } else {
+          setError(result.error || 'Failed to decode QR code for inspection.');
+        }
+      };
+      img.onerror = () => {
+        setError('Failed to load image element for QR inspection.');
+      };
+      img.src = dataUrl;
+    } catch (err: any) {
+      console.error('File reading error:', err);
+      setError(err.message || 'Failed to read the image file.');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       processImageFile(file);
+      e.target.value = ''; // Reset input value so same file can be selected again
     }
   };
 

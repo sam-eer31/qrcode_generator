@@ -14,6 +14,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import { auth, db, isFirebaseConfigured } from '../../utils/firebase';
 import { Button } from '../../components/ui/Button';
+import { readFileAsArrayBufferWithRetry } from '../../utils/fileUtils';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
 
@@ -127,11 +128,17 @@ const compressImageBase64 = async (file: File): Promise<string> => {
   
   try {
     const compressedBlob = await imageCompression(file, options);
-    const base64Data = await imageCompression.getDataUrlFromFile(compressedBlob);
-    return base64Data;
+    return await imageCompression.getDataUrlFromFile(compressedBlob);
   } catch (err: any) {
-    console.error('Image compression error:', err);
-    throw new Error(err.message || 'Image compression failed');
+    console.warn('Image compression with web worker failed. Retrying on main thread...', err);
+    try {
+      const fallbackOptions = { ...options, useWebWorker: false };
+      const compressedBlob = await imageCompression(file, fallbackOptions);
+      return await imageCompression.getDataUrlFromFile(compressedBlob);
+    } catch (fallbackErr: any) {
+      console.error('Image compression failed completely:', fallbackErr);
+      throw new Error(fallbackErr.message || 'Browser rejected the image. Please try a different image.');
+    }
   }
 };
 
@@ -170,7 +177,7 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
 
   if (!isFirebaseConfigured()) return <MissingFirebaseConfig />;
 
-  const processFileImmediately = (file: File) => {
+  const processFileImmediately = async (file: File) => {
     if (file.type === 'image/heic' || file.type === 'image/heif') {
       setUploadError('HEIC format is not supported by browsers. Please convert to JPG/PNG, or change your phone camera settings to "Most Compatible".');
       return;
@@ -188,60 +195,43 @@ export const CloudImageForm: React.FC<CloudFormProps> = ({ onChange }) => {
     setUploading(true);
     setUploadError('');
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const arrayBuffer = event.target?.result as ArrayBuffer;
-        if (!arrayBuffer) {
-          throw new Error('Failed to read file from your device.');
-        }
+    try {
+      const arrayBuffer = await readFileAsArrayBufferWithRetry(file);
 
-        // Create a completely new memory-backed File object from the ArrayBuffer.
-        // This ensures the OS content resolver is no longer needed.
-        const stableBlob = new Blob([arrayBuffer], { type: file.type });
-        const stableFile = new File([stableBlob], file.name, { type: file.type });
+      // Create a completely new memory-backed File object from the ArrayBuffer.
+      // This ensures the OS content resolver is no longer needed.
+      const stableBlob = new Blob([arrayBuffer], { type: file.type });
+      const stableFile = new File([stableBlob], file.name, { type: file.type });
 
-        setUploadProgress('Compressing image...');
-        const base64Data = await compressImageBase64(stableFile);
-        
-        const approxSizeBytes = base64Data.length * 0.75;
-        if (approxSizeBytes > 900000) {
-          throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
-        }
-
-        setSelectedFile({ name: file.name, size: file.size });
-        setCompressedData(base64Data);
-        setFilePreview(base64Data);
-        setUploadError('');
-      } catch (err: any) {
-        console.error('File processing error:', err);
-        setUploadError(err.message || 'Failed to process image');
-        setSelectedFile(null);
-        setCompressedData(null);
-        setFilePreview(null);
-      } finally {
-        setUploading(false);
-        setUploadProgress('');
+      setUploadProgress('Compressing image...');
+      const base64Data = await compressImageBase64(stableFile);
+      
+      const approxSizeBytes = base64Data.length * 0.75;
+      if (approxSizeBytes > 900000) {
+        throw new Error('Image is too complex/large even after compression. Please try a simpler image.');
       }
-    };
 
-    reader.onerror = (err) => {
-      console.error('FileReader error:', err);
-      setUploadError('Failed to read the file from your device. Please try again.');
+      setSelectedFile({ name: file.name, size: file.size });
+      setCompressedData(base64Data);
+      setFilePreview(base64Data);
+      setUploadError('');
+    } catch (err: any) {
+      console.error('File processing error:', err);
+      setUploadError(err.message || 'Failed to process image');
       setSelectedFile(null);
       setCompressedData(null);
       setFilePreview(null);
+    } finally {
       setUploading(false);
       setUploadProgress('');
-    };
-
-    reader.readAsArrayBuffer(file);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       processFileImmediately(file);
+      e.target.value = ''; // Reset the input value so the same file can be selected again
     }
   };
 
