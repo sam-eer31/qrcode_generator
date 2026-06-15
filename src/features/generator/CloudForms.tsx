@@ -118,47 +118,70 @@ const SuccessView = ({ title, link, onReset, resetText }: { title: string, link:
 
 const compressImageBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.src = objectUrl;
+    const reader = new FileReader();
     
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 400;
-      const MAX_HEIGHT = 400;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
+    reader.onload = (event) => {
+      if (!event.target?.result) {
+        reject(new Error('Failed to read file data.'));
+        return;
       }
+      
+      const img = new Image();
+      // Handle cross-origin just in case, though it's local data
+      img.crossOrigin = 'Anonymous';
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const MAX_HEIGHT = 600;
+        let width = img.width;
+        let height = img.height;
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, width, height);
-        // Export as heavily compressed Base64 Data URL to fit in Firestore 1MB limit
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-        resolve(dataUrl);
-      } else {
-        reject(new Error('Failed to get canvas context.'));
-      }
+        // Maintain aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Draw image to canvas
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          try {
+            // Export as JPEG with 0.6 quality for good balance of size/quality
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            resolve(dataUrl);
+          } catch (e) {
+            reject(new Error('Failed to compress image data.'));
+          }
+        } else {
+          reject(new Error('Browser does not support canvas context.'));
+        }
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Browser rejected the image format. Please ensure it is a valid JPG/PNG.'));
+      };
+
+      img.src = event.target.result as string;
     };
-    
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Browser failed to read the image format. Please try a standard JPG/PNG.'));
+
+    reader.onerror = () => {
+      reject(new Error('Failed to read the file from your device.'));
     };
+
+    // Read the file as a Data URL (base64)
+    reader.readAsDataURL(file);
   });
 };
 
