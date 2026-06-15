@@ -391,8 +391,9 @@ export default function App() {
                   <Icon className={`h-3.5 w-3.5 ${isCloud && !isActive ? 'animate-pulse' : ''}`} />
                   <span>{t.label}</span>
                   {isCloud && (
-                    <span className={`ml-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'}`}>
-                      New
+                    <span className={`ml-1.5 flex items-center space-x-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'}`}>
+                      <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                      <span>Live</span>
                     </span>
                   )}
                 </button>
