@@ -372,18 +372,29 @@ export default function App() {
             {tabsList.map((t) => {
               const Icon = t.icon;
               const isActive = activeTab === t.id;
+              const isCloud = t.id === 'cloud';
+              
               return (
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`relative flex-shrink-0 flex items-center space-x-1.5 px-4.5 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
+                  className={`relative flex-shrink-0 flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all focus:outline-none ${
                     isActive
-                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                      : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-350'
+                      ? isCloud
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 scale-105 z-10'
+                        : 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                      : isCloud
+                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30'
+                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-350'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className={`h-3.5 w-3.5 ${isCloud && !isActive ? 'animate-pulse' : ''}`} />
                   <span>{t.label}</span>
+                  {isCloud && (
+                    <span className={`ml-1 text-[8px] px-1.5 py-0.5 rounded-md uppercase tracking-wider font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'}`}>
+                      New
+                    </span>
+                  )}
                 </button>
               );
             })}
