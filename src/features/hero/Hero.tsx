@@ -94,7 +94,7 @@ export const Hero: React.FC<HeroProps> = ({ onCreateClick, onUploadClick, onClou
             className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-800 dark:from-white dark:via-neutral-100 dark:to-neutral-300 font-sans"
           >
             Generate. <br className="hidden sm:inline" />
-            <span className="text-accent">Cloud Sync.</span> Decode.
+            <span className="text-accent">Cloud Share.</span> Decode.
           </motion.h1>
 
           <motion.p
