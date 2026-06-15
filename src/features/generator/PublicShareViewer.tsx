@@ -233,7 +233,7 @@ export const PublicShareViewer: React.FC<PublicShareViewerProps> = ({ shareId })
         <div className="space-y-4">
           <div 
             style={{ background: themeGradient.bg }}
-            className={`relative rounded-3xl p-8 border ${themeGradient.border} shadow-glass ${themeGradient.shadow} flex flex-col justify-between min-h-[200px] overflow-hidden`}
+            className={`relative rounded-3xl p-8 border ${themeGradient.border} shadow-glass ${themeGradient.shadow} flex flex-col justify-between min-h-[200px] overflow-hidden ${themeGradient.text}`}
           >
             {/* Dynamic Pattern Overlay */}
             {(!data.bgPattern || data.bgPattern === 'dots') && (
