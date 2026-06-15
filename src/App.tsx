@@ -118,6 +118,7 @@ export default function App() {
 
   // Drag-to-scroll tabs logic
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const dragThresholdExceeded = useRef(false);
   const [isDraggingTabs, setIsDraggingTabs] = useState(false);
   const [tabStartX, setTabStartX] = useState(0);
   const [tabScrollLeft, setTabScrollLeft] = useState(0);
@@ -145,6 +146,7 @@ export default function App() {
   const handleTabMouseDown = (e: React.MouseEvent) => {
     if (!tabsContainerRef.current) return;
     setIsDraggingTabs(true);
+    dragThresholdExceeded.current = false;
     setTabStartX(e.pageX - tabsContainerRef.current.offsetLeft);
     setTabScrollLeft(tabsContainerRef.current.scrollLeft);
   };
@@ -154,17 +156,20 @@ export default function App() {
     e.preventDefault();
     const x = e.pageX - tabsContainerRef.current.offsetLeft;
     const walk = (x - tabStartX) * 1.5; // Drag speed multiplier
+    
+    if (Math.abs(x - tabStartX) > 5) {
+      dragThresholdExceeded.current = true;
+    }
+    
     tabsContainerRef.current.scrollLeft = tabScrollLeft - walk;
   };
 
   const handleTabClick = (e: React.MouseEvent, tabId: string) => {
-    // Prevent click if we were dragging
-    if (isDraggingTabs && tabsContainerRef.current) {
-      const currentX = e.pageX - tabsContainerRef.current.offsetLeft;
-      if (Math.abs(currentX - tabStartX) > 5) {
-        e.preventDefault();
-        return;
-      }
+    // Prevent click if we were actively dragging
+    if (dragThresholdExceeded.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
     }
     setActiveTab(tabId);
   };
@@ -501,7 +506,7 @@ export default function App() {
           </div>
           
           {/* Tabs bar */}
-          <div className="relative w-full sm:w-fit -mx-4 sm:mx-0">
+          <div className="relative w-full sm:w-auto sm:max-w-[60%] lg:max-w-none min-w-0 -mx-4 sm:mx-0">
             {/* Left Fade Indicator */}
             {canScrollLeft && (
               <div className="absolute left-4 sm:left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-[#0E0E0E] to-transparent z-20 pointer-events-none rounded-l-2xl" />
