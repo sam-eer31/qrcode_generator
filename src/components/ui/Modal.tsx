@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             aria-labelledby="modal-title"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-900 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-900 px-4 sm:px-6 py-4">
               <h3 id="modal-title" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
                 {title}
               </h3>
@@ -66,7 +66,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             </div>
 
             {/* Content */}
-            <div className="max-h-[70vh] overflow-y-auto p-6">
+            <div className="max-h-[85vh] sm:max-h-[70vh] overflow-y-auto p-4 sm:p-6">
               {children}
             </div>
           </motion.div>

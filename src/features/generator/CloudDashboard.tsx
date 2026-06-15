@@ -365,11 +365,11 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
               {items.map((item) => (
                 <div 
                   key={item.id}
-                  className="group relative flex items-center justify-between p-3 bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-2xl hover:border-neutral-350 dark:hover:border-neutral-800 transition-all shadow-premium dark:shadow-premium-dark select-none"
+                  className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-white dark:bg-[#0E0E0E] border border-neutral-200 dark:border-neutral-900 rounded-2xl hover:border-neutral-350 dark:hover:border-neutral-800 transition-all shadow-premium dark:shadow-premium-dark select-none gap-3 sm:gap-0"
                 >
                   <div className="flex items-center space-x-3.5 min-w-0 flex-1">
                     {/* Thumbnail / Icon Indicator */}
-                    <div className="h-11 w-11 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/50 dark:border-neutral-850 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    <div className="h-12 w-12 sm:h-11 sm:w-11 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/50 dark:border-neutral-850 flex-shrink-0 overflow-hidden flex items-center justify-center">
                       {item.type === 'image' ? (
                         <img 
                           src={item.content} 
@@ -384,39 +384,37 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
                     {/* Metadata column */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-bold text-neutral-800 dark:text-white truncate">
+                        <span className="text-sm sm:text-xs font-bold text-neutral-800 dark:text-white truncate">
                           {item.type === 'image' ? (item.fileName || 'Shared Image') : getPreviewText(item.content)}
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-3 mt-1.5 text-[9px] font-bold text-neutral-400 select-none uppercase tracking-wider">
-                        <span className="flex items-center">
-                          <Eye className="w-3.5 h-3.5 mr-0.5 text-neutral-400" />
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[9px] font-bold text-neutral-400 select-none uppercase tracking-wider">
+                        <span className="flex items-center bg-neutral-100 dark:bg-neutral-900 px-1.5 py-0.5 rounded-md">
+                          <Eye className="w-3 h-3 mr-1 text-neutral-400" />
                           {item.scanCount || 0}
                         </span>
-                        <span>•</span>
-                        <span className="flex items-center">
-                          <Calendar className="w-3.5 h-3.5 mr-0.5 text-neutral-400" />
+                        <span className="flex items-center bg-neutral-100 dark:bg-neutral-900 px-1.5 py-0.5 rounded-md">
+                          <Calendar className="w-3 h-3 mr-1 text-neutral-400" />
                           {new Date(item.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                         </span>
-                        <span>•</span>
                         {getExpiryLabel(item.expiresAt)}
                       </div>
                     </div>
                   </div>
 
                   {/* Actions Column */}
-                  <div className="flex items-center space-x-1.5 ml-3">
+                  <div className="flex items-center gap-2 sm:gap-1.5 w-full sm:w-auto justify-end border-t border-neutral-100 dark:border-neutral-900 sm:border-0 pt-3 sm:pt-0 sm:ml-3">
                     <button
                       onClick={() => handleCopyLink(item.id)}
-                      className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-450 hover:text-accent transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-450 hover:text-accent transition-colors"
                       title="Copy Public Link"
                     >
                       {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       onClick={() => setSelectedItem(item)}
-                      className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-450 hover:text-accent transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-450 hover:text-accent transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -424,7 +422,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
                     <button
                       onClick={() => handleDeleteItem(item)}
                       disabled={deletingId === item.id}
-                      className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-red-500/10 text-neutral-500 dark:text-neutral-450 hover:text-red-500 transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 hover:bg-red-500/10 text-neutral-500 dark:text-neutral-450 hover:text-red-500 transition-colors"
                       title="Delete Upload"
                     >
                       {deletingId === item.id ? (
