@@ -98,11 +98,11 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
       }
     });
 
-    // Listen to changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+    // Listen to auth status changes, but ignore USER_UPDATED to prevent random loading flickers
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
         fetchUserItems(session.user.id);
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setItems([]);
         setLoading(false);
       }
