@@ -37,6 +37,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ShareData | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<ShareData | null>(null);
 
   const getPreviewText = (html: string) => {
     try {
@@ -117,13 +118,14 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDeleteItem = async (item: ShareData) => {
+  const handleDeleteItem = (item: ShareData) => {
+    setItemToDelete(item);
+  };
+
+  const executeDelete = async (item: ShareData) => {
     const client = supabase;
     if (!client) return;
     
-    const confirmDelete = window.confirm('Are you sure you want to delete this shared link permanently? This cannot be undone.');
-    if (!confirmDelete) return;
-
     setDeletingId(item.id);
 
     try {
@@ -149,8 +151,10 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
       if (selectedItem?.id === item.id) {
         setSelectedItem(null);
       }
+      setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting shared link:', err);
+      // Fallback alert just in case of severe error
       alert('Failed to delete item. Please try again.');
     } finally {
       setDeletingId(null);
@@ -300,7 +304,7 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in select-none">
+    <div className="space-y-6 animate-fade-in select-none relative">
       
       {/* Dashboard Top Header Navigation */}
       <div className="flex items-center justify-between pb-4 border-b border-neutral-200 dark:border-neutral-900">
@@ -436,6 +440,41 @@ export const CloudDashboard: React.FC<CloudDashboardProps> = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Professional Deletion Confirmation Overlay */}
+      {itemToDelete && (
+        <div className="absolute inset-0 z-20 bg-white/80 dark:bg-[#0E0E0E]/90 backdrop-blur-sm flex items-center justify-center p-4 rounded-2xl animate-fade-in">
+          <div className="bg-white dark:bg-[#1A1A1A] border border-red-500/20 shadow-2xl rounded-3xl p-6 sm:p-8 max-w-[320px] w-full text-center space-y-4">
+            <div className="mx-auto w-14 h-14 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <h4 className="text-xl font-black text-neutral-900 dark:text-white">Delete Link?</h4>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+              This action cannot be undone. This link will be permanently removed from your cloud account.
+            </p>
+            <div className="flex gap-3 pt-4">
+              <button 
+                onClick={() => setItemToDelete(null)}
+                disabled={deletingId === itemToDelete.id}
+                className="flex-1 py-3 rounded-xl text-sm font-bold bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => executeDelete(itemToDelete)}
+                disabled={deletingId === itemToDelete.id}
+                className="flex-1 py-3 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors flex justify-center items-center disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {deletingId === itemToDelete.id ? (
+                  <div className="h-5 w-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                ) : (
+                  "Yes, Delete"
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
