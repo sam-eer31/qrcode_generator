@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Settings, 
   AlertCircle, 
   Check, 
   Lock,
@@ -10,7 +9,7 @@ import {
   CloudUpload
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { supabase, isSupabaseConfigured } from '../../utils/supabase';
+import { supabase } from '../../utils/supabase';
 import { Button } from '../../components/ui/Button';
 import { Label } from '../../components/ui/Input';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
